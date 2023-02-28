@@ -1,10 +1,10 @@
 FROM alpine
 
 # install openssh and borgbackup
-RUN apk add openssh-server borgbackup btrfs-progs losetup python3
+RUN apk add openssh-server borgbackup btrfs-progs losetup python3 py3-btrfs-progs
 
 # dev only deps
-Run apk add make
+RUN apk add make py3-pip; pip install ipython
 
 RUN ssh-keygen -A; adduser --disabled-password borg; 
 RUN mkdir /home/borg/.ssh; chown borg:borg /home/borg/.ssh; chmod 700 /home/borg/.ssh;
