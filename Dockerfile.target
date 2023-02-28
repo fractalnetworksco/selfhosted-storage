@@ -18,7 +18,7 @@ RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/s
 RUN sed -i 's/borg:!:/borg:*:/' /etc/shadow
 
 # entrypoint
-COPY entrypoint.sh /entrypoint.sh
+COPY entrypoint.target.sh /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
 
