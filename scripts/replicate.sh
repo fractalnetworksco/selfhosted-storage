@@ -44,6 +44,9 @@ while true; do
         echo "Taking new snapshot"
         # create a read-only snapshot of the subvolume
         take_snapshot $1 $generation
+        export BORG_RSH="ssh -i /code/borg_key -p 2222"
+        borg create --progress borg@172.17.0.1:~/repo::snap-$generation snapshots/snapshot-$generation
+
     else
         echo "No new snapshot"
     fi

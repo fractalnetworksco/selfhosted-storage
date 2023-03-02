@@ -1,7 +1,7 @@
 FROM alpine
 
 # install openssh and borgbackup
-RUN apk add openssh-server borgbackup btrfs-progs losetup python3 py3-btrfs-progs
+RUN apk add openssh-server openssh-client borgbackup btrfs-progs losetup python3 py3-btrfs-progs
 
 # dev only deps
 RUN apk add make py3-pip; pip install ipython
