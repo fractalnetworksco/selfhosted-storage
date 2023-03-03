@@ -1,4 +1,5 @@
-#!/bin/ash
+#!/bin/bash
+set -u
 
 # shell script that creates a read-only snapshot of a btrfs subvolume if the generation has changed since the last snapshot
 # usage: replicate.sh <subvolume>
@@ -13,10 +14,12 @@ function get_generation() {
 function take_snapshot() {
     # create a read-only snapshot of the subvolume
     btrfs subvolume snapshot -r $1 snapshots/snapshot-$generation
-    btrfs filesystem sync $1
-    local generation=$(get_generation $1)
-    echo $generation > $GENERATION_FILE
-
+    #btrfs filesystem sync $1
+ 
+    # get generation and write to file
+    # the has to be done after the snapshot is created
+    local new_generation=$(get_generation $1)
+    echo $new_generation > $GENERATION_FILE
 }
 
 # read generation from $3
@@ -25,14 +28,7 @@ if [ -f $GENERATION_FILE ]; then
     generation=$(cat $GENERATION_FILE)
 else
     # create the file and write the generation
-    generation=$(get_generation $1)
     take_snapshot $1
-fi
-
-# check if the generation has changed since the last snapshot
-if [ $(get_generation $1) -ne $generation ]; then
-    # create a read-only snapshot of the subvolume
-    take_snapshot $1 $(get_generation $1)
 fi
 
 # read value from file into variable in while loop
@@ -43,9 +39,11 @@ while true; do
     if [ $generation -ne $(cat $GENERATION_FILE) ]; then
         echo "Taking new snapshot"
         # create a read-only snapshot of the subvolume
-        take_snapshot $1 $generation
-        export BORG_RSH="ssh -i /code/borg_key -p 2222"
-        borg create --progress borg@172.17.0.1:~/repo::snap-$generation snapshots/snapshot-$generation
+        take_snapshot $1
+        export BORG_RSH="ssh -i /code/borg_key"
+        cd snapshots/snapshot-$generation/data
+        borg create --progress root@selfhosted.pub:~/repo::snap-$generation .
+        cd ../../..
 
     else
         echo "No new snapshot"
