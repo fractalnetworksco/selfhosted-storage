@@ -28,6 +28,8 @@ if [ -f $GENERATION_FILE ]; then
     generation=$(cat $GENERATION_FILE)
 else
     # create the file and write the generation
+    generation=$(get_generation $1)
+    mkdir -p /s4/snapshots; mkdir -p /s4/data;
     take_snapshot $1
 fi
 
@@ -40,9 +42,9 @@ while true; do
         echo "Taking new snapshot"
         # create a read-only snapshot of the subvolume
         take_snapshot $1
-        export BORG_RSH="ssh -i /code/borg_key"
+        export BORG_RSH="ssh -o StrictHostKeyChecking=accept-new"
         cd snapshots/snapshot-$generation/data
-        borg create --progress root@selfhosted.pub:~/repo::snap-$generation .
+        borg create --progress $S4_TARGET::$VOLUME-$generation .
         cd ../../..
 
     else

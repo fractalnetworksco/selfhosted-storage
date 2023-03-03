@@ -1,7 +1,7 @@
 FROM alpine
 
 # install openssh and borgbackup
-RUN apk add --no-cache openssh-server openssh-client borgbackup btrfs-progs losetup python3 py3-btrfs-progs bash
+RUN apk add --no-cache docker-cli openssh-server openssh-client borgbackup btrfs-progs losetup python3 py3-btrfs-progs bash
 
 # dev only deps
 RUN apk add --no-cache make py3-pip; pip install ipython
@@ -22,7 +22,8 @@ RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/s
 RUN sed -i 's/borg:!:/borg:*:/' /etc/shadow
 
 # entrypoint
-COPY entrypoint.agent.sh /entrypoint.sh
+COPY scripts/replicate.sh /entrypoint.sh
 
-ENTRYPOINT ["/entrypoint.sh"]
+WORKDIR /s4
 
+ENTRYPOINT ["/entrypoint.sh", "/s4"]

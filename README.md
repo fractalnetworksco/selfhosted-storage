@@ -1,5 +1,5 @@
-# selfhosted-backups
-Easy, secure and reliable personal backups for Docker volumes powered by BorgBackup and BTRFS
+# Simple Self-hosted Storage Service (s4)
+Easy, secure and reliable personal backups powered by BorgBackup and BTRFS
 
 
 ## Project Goals
@@ -9,3 +9,5 @@ Easy, secure and reliable personal backups for Docker volumes powered by BorgBac
 - Ability to restore to point-in-time backup (time machine)
 - User friendly command-line interface
 - Lightweight REST Mgmt API
+
+
