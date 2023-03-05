@@ -11,3 +11,42 @@ Easy, secure and reliable personal backups powered by BorgBackup and BTRFS
 - Lightweight REST Mgmt API
 
 
+# Proposed CLI Interface
+
+# create a volume
+```
+s4 init myvolume
+```
+
+# set volume remote
+
+```
+s4 remote add origin root@myserver
+```
+
+# clone volume
+
+```
+s4 clone root@myserver:volumes/jpb-videos
+```
+
+# update local volume
+```
+s4 pull
+```
+
+# update remote
+```
+s4 commit -m "Add latest JPB video"
+```
+
+# enable replication for volume
+```
+s4 replicate
+```
+
+# enable syncing from remote
+```
+s4 sync
+```
+
