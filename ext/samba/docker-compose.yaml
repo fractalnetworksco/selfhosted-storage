@@ -1,0 +1,22 @@
+services:
+  samba:
+    container_name: samba
+    image: crazymax/samba:${SAMBA_IMAGE_VERSION:-latest}
+    restart: unless-stopped
+    env_file:
+      - samba.env
+    ports:
+      - 139:139
+      - 445:445
+    volumes:
+      - "./data/cache:/data/cache"
+      - "./data/config.yml:/data/config.yml"
+      - "jpb-videos:/shares/public"
+      - "smb_test_vol:/shares/videos"
+    privileged: True
+
+
+volumes:
+    jpb-videos:
+        external: true
+    smb_test_vol:

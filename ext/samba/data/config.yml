@@ -1,0 +1,28 @@
+auth:
+  - user: root
+    group: root
+    uid: 0
+    gid: 0
+    password: westsore
+global:
+  - "force user = root"
+  - "force group = root"
+share:
+  - name: public
+    comment: Public
+    path: /shares/public
+    browsable: yes
+    readonly: yes
+    guestok: yes
+    veto: no
+    recycle: no
+  - name: videos
+    comment: vids
+    path: /shares/public
+    browsable: yes
+    readonly: no
+    guestok: yes
+    veto: no
+    recycle: no
+    writeable: yes
+
