@@ -33,13 +33,22 @@ done
 # if --remote is set init borg repo
 if [ -n "$REMOTE" ]; then
     # create borg repo
-    borg init --encryption=none $REMOTE/$VOL
+    # generate an ssh keypair with no interaction
+    ssh-keygen -t ed25519 -N '' -f ~/.ssh/id_ed25519-$VOL
+    borg --rsh "ssh -p 2222" init --encryption=none $REMOTE/$VOL
+    # strip everything afte : from the remote
+    REMOTE=$(echo $REMOTE | cut -d':' -f1)
+    PUB_KEY=$(<~/.ssh/id_ed25519-$VOL.pub)
+    echo $PUB_KEY
+    ssh -p 2222 $REMOTE sudo su_add_ssh_key $VOL "$PUB_KEY"
 fi
 # exit if not successful
 if [ $? -ne 0 ]; then
     echo "Failed to initialize borg repo"
     exit 1
 fi
+
+
 
 # allocate file twice the size of the current directory being initialized
 create_double_size_file $(pwd) $VOL_DIR/$VOL
