@@ -1,5 +1,5 @@
 #!/bin/bash
-
+ set -e
 #script dir
 SCRIPT_DIR=$(dirname $(readlink -f $0))
 
@@ -14,7 +14,7 @@ cd $1
 # set VOL to $2 if it set, otherwise set to basename of dir referenced by $1
 [ -n "$2" ] && VOL=$2 || VOL=$(basename $(pwd))
 
-echo "Creating volume: $VOL"
+echo "Creating s4 volume: $VOL"
 
 # read --remote argument from command line
 while [[ $# -gt 0 ]]; do
@@ -51,9 +51,10 @@ create_loop_device $VOL_DIR/$VOL
 mkfs.btrfs $(get_loop_device_for_file $VOL_DIR/$VOL)
 
 # create btrfs backed docker volume
-docker volume create --label s4.volume --driver local --opt type=btrfs\
- --opt device=$(get_loop_device_for_file $VOL) $VOL
-
-
+# IF $NODOCKER is set, don't create docker volume
+if [ -z "$NODOCKER" ]; then
+    docker volume create --label s4.volume --driver local --opt type=btrfs\
+     --opt device=$(get_loop_device_for_file $VOL_DIR/$VOL) $VOL
+fi
 
 

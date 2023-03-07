@@ -21,7 +21,7 @@ $ make docker-desktop-shell DATA_DIR=~/my-existing-folder
 ```
 4. Initialize a s4 volume called `my-s4-volume`
 ```
-$ BORG_RSG="ssh -p 2222" /code/scripts/init.sh /data my-s4-volume --remote borg@s4-target-host
+$ BORG_RSH="ssh -p 2222" /code/scripts/init.sh /data my-s4-volume --remote borg@s4-target-host
 ```
 5. Exit `docker-desktop` shell
 ```

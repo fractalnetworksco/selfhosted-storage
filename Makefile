@@ -7,6 +7,9 @@ docker:
 docker-desktop-shell:
 	docker run -it --privileged --rm --workdir /var/lib/fractal -v $(DATA_DIR):/data -v /var/lib/fractal:/var/lib/fractal -v /run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock -e SSH_AUTH_SOCK="/run/host-services/ssh-auth.sock" -v /var/run/docker.sock:/var/run/docker.sock -v `pwd`:/code --entrypoint bash s4-agent:latest
 
+shell:
+	docker run -it --privileged --workdir /data --rm -v $(VOLUME):/data -v /run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock -e SSH_AUTH_SOCK="/run/host-services/ssh-auth.sock" -v /var/run/docker.sock:/var/run/docker.sock -v `pwd`:/code --entrypoint bash s4-agent:latest
+
 nsenter:
 	# not needed but useful to enter the docker vm
 	docker run --privileged --rm --pid=host -it --entrypoint nsenter s4-agent:latest -t 1 -m -u -n -i
