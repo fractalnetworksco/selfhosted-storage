@@ -40,7 +40,7 @@ if [ -n "$REMOTE" ]; then
     REMOTE=$(echo $REMOTE | cut -d':' -f1)
     PUB_KEY=$(<~/.ssh/id_ed25519-$VOL.pub)
     echo $PUB_KEY
-    ssh -p 2222 $REMOTE sudo su_add_ssh_key $VOL "$PUB_KEY"
+    ssh -p 2222 $REMOTE bash -c "sudo su_add_ssh_key $VOL \"$PUB_KEY\""
 fi
 # exit if not successful
 if [ $? -ne 0 ]; then
