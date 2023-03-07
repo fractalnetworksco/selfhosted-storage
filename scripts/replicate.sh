@@ -34,21 +34,21 @@ else
 fi
 
 # read value from file into variable in while loop
-while true; do
-    # get the generation of a subvolume
-    generation=$(get_generation $1)
-    # check if the generation has changed since the last snapshot
-    if [ $generation -ne $(cat $GENERATION_FILE) ]; then
-        echo "Taking new snapshot"
-        # create a read-only snapshot of the subvolume
-        take_snapshot $1
-        export BORG_RSH="ssh -o StrictHostKeyChecking=accept-new"
-        cd snapshots/snapshot-$generation/data
-        borg create --progress $S4_TARGET::$VOLUME-$generation .
-        cd ../../..
+# while true; do
+#     # get the generation of a subvolume
+#     generation=$(get_generation $1)
+#     # check if the generation has changed since the last snapshot
+#     if [ $generation -ne $(cat $GENERATION_FILE) ]; then
+#         echo "Taking new snapshot"
+#         # create a read-only snapshot of the subvolume
+#         take_snapshot $1
+#         export BORG_RSH="ssh -o StrictHostKeyChecking=accept-new"
+#         cd snapshots/snapshot-$generation/data
+#         borg create --progress $S4_TARGET::$VOLUME-$generation .
+#         cd ../../..
 
-    else
-        echo "No new snapshot"
-    fi
-    sleep 1  
-done
+#     else
+#         echo "No new snapshot"
+#     fi
+#     sleep 1  
+# done

@@ -1,16 +1,10 @@
 # Simple Selfhosted Storage System (s4)
 
-Selfhosted-storage leverages incremental BTRFS snapshots and borgbackups to provide an intuituve and user-friendly automated backup solution for your docker based applications's docker volumes.
+s4 is a personal data storage frontend that makes it easy to keep personal data safe.
 
-## Strategies Brainstorm
+s4 is designed to be familiar to git users. It combines Borg Backups, BTRFS and Rsync to enable near real-time replication and synchronization of local files and folders via BTRFS snapshots and borg backups to provide an intuituve and user-friendly automated backup solution for your files and folders. It provides a simple agent for replicating local docker volumes and keeping a local synchronized copy of remote docker volumes.
 
-1) Migrating existing docker volumes to s4
 
-`s4 create --from existing-vol existing-vol-s4`
-
-Inspect existing docker volume, creat s4 volume and copy data to it.
-
-2) Replicate volume via entrypoint wrapper.
 
 ## Resizing
 
@@ -18,13 +12,20 @@ truncate -s 5G btrfs.img
 losetup -c /dev/loop0
 btrfs fi resize max .
 
+
 ## Components
 
 agent container -> replicates data to 
 target container -> runs on hosts to which data is replicated
 
+## Syncing
 
-## How it works
+
+## Replicating
+s4 volumes "replicate" by:
+ 1) btrfs subvolume snapshot volume
+
+ ## Migrating to s4 volumes
 
 ## creating a s4 volume
 - create a backing file specifying its size, 1G for example

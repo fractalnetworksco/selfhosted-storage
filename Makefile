@@ -5,7 +5,7 @@ docker:
 
 # use this to run s4 with docker desktop
 docker-desktop-shell:
-	docker run -it --privileged --rm --workdir /var/lib/fractal -v /var/lib/fractal:/var/lib/fractal -v /run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock -e SSH_AUTH_SOCK="/run/host-services/ssh-auth.sock" -v /var/run/docker.sock:/var/run/docker.sock -v `pwd`:/code --entrypoint bash s4-agent:latest
+	docker run -it --privileged --rm --workdir /var/lib/fractal -v $(DATA_DIR):/data -v /var/lib/fractal:/var/lib/fractal -v /run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock -e SSH_AUTH_SOCK="/run/host-services/ssh-auth.sock" -v /var/run/docker.sock:/var/run/docker.sock -v `pwd`:/code --entrypoint bash s4-agent:latest
 
 nsenter:
 	# not needed but useful to enter the docker vm
