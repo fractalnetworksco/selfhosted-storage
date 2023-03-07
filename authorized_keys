@@ -1,1 +1,1 @@
-command="borg serve --restrict-to-path /home/borg/repo",restrict ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBg6GK2sVW6nqB41z3s7BtXxSKV0crTUe7Dhrk3kbJgO balaa@Mos-MacBook-Pro
+command="borg serve --restrict-to-path /volumes",restrict ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBg6GK2sVW6nqB41z3s7BtXxSKV0crTUe7Dhrk3kbJgO balaa@Mos-MacBook-Pro

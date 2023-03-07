@@ -1,21 +1,25 @@
 FROM alpine
 
 # install openssh and borgbackup
-RUN apk add openssh-server borgbackup 
-RUN ssh-keygen -A; adduser --disabled-password borg; 
+RUN apk add openssh-server borgbackup bash
+RUN ssh-keygen -A; adduser --disabled-password borg; adduser --disabled-password s4admin;
 RUN mkdir /home/borg/.ssh; chown borg:borg /home/borg/.ssh; chmod 700 /home/borg/.ssh;
+RUN mkdir /home/s4admin/.ssh; chown s4admin:s4admin /home/s4admin/.ssh; chmod 700 /home/s4admin/.ssh;
 
 COPY authorized_keys /home/borg/.ssh/authorized_keys
+COPY admin_authorized_keys /home/s4admin/.ssh/authorized_keys
 
 RUN chown borg:borg /home/borg/.ssh/authorized_keys; chmod 600 /home/borg/.ssh/authorized_keys;
+RUN chown s4admin:s4admin /home/s4admin/.ssh/authorized_keys; chmod 600 /home/s4admin/.ssh/authorized_keys;
 
 # Configure SSH server
 RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config \
-  && echo "AllowUsers borg" >> /etc/ssh/sshd_config
+  && echo "AllowUsers borg s4admin" >> /etc/ssh/sshd_config
 
 # Allow login with ssh key only, set impossible password
 # https://arlimus.github.io/articles/usepam/
 RUN sed -i 's/borg:!:/borg:*:/' /etc/shadow
+RUN sed -i 's/s4admin:!:/s4admin:*:/' /etc/shadow
 
 # entrypoint
 COPY entrypoint.target.sh /entrypoint.sh
