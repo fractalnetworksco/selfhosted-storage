@@ -2,6 +2,8 @@
  set -e
 #script dir
 SCRIPT_DIR=$(dirname $(readlink -f $0))
+# DEFAULT PORT to 2222 if not specified
+REMOTE_PORT=${PORT:-2222}
 
 #volume dir
 VOL_DIR=/var/lib/fractal
@@ -35,12 +37,17 @@ if [ -n "$REMOTE" ]; then
     # create borg repo
     # generate an ssh keypair with no interaction
     ssh-keygen -t ed25519 -N '' -f ~/.ssh/id_ed25519-$VOL
-    borg --rsh "ssh -p 2222" init --encryption=none $REMOTE/$VOL
+    borg --rsh "ssh -p $REMOTE_PORT" init --encryption=none $REMOTE/$VOL
     # strip everything afte : from the remote
     REMOTE=$(echo $REMOTE | cut -d':' -f1)
     PUB_KEY=$(<~/.ssh/id_ed25519-$VOL.pub)
     echo $PUB_KEY
-    ssh -p 2222 $REMOTE sudo su_add_ssh_key $VOL \"$PUB_KEY\"
+    # s4admin uses sudo to run su_add_ssh_key which calls add_ssh_key as the borg user
+    # replace ssh user borg with s4admin user
+    ADMIN_REMOTE=$(echo $REMOTE | sed "s/borg/s4admin/")
+
+    # add volume ssh key to borg user's authorized_keys, only s4admin can do this
+    ssh -p $REMOTE_PORT $ADMIN_REMOTE sudo su_add_ssh_key $VOL \"$PUB_KEY\"
 fi
 # exit if not successful
 if [ $? -ne 0 ]; then
