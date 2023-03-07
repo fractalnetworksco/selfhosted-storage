@@ -1,1 +1,1 @@
-s4admin ALL=NOPASSWD: /bin/su - borg
+s4admin ALL=NOPASSWD: /usr/bin/su_add_ssh_key*

@@ -10,6 +10,10 @@ COPY config/authorized_keys /home/borg/.ssh/authorized_keys
 COPY config/admin_authorized_keys /home/s4admin/.ssh/authorized_keys
 COPY config/s4admin /etc/sudoers.d/s4admin
 
+COPY scripts/add_ssh_key.sh /usr/bin/add_ssh_key
+COPY scripts/su_add_ssh_key.sh /usr/bin/su_add_ssh_key
+
+
 RUN chown borg:borg /home/borg/.ssh/authorized_keys; chmod 600 /home/borg/.ssh/authorized_keys;
 RUN chown s4admin:s4admin /home/s4admin/.ssh/authorized_keys; chmod 600 /home/s4admin/.ssh/authorized_keys;
 
