@@ -9,7 +9,7 @@ RUN apk add --no-cache make py3-pip; pip install ipython
 RUN ssh-keygen -A; adduser --disabled-password borg; 
 RUN mkdir /home/borg/.ssh; chown borg:borg /home/borg/.ssh; chmod 700 /home/borg/.ssh;
 
-COPY authorized_keys /home/borg/.ssh/authorized_keys
+COPY config/authorized_keys /home/borg/.ssh/authorized_keys
 
 RUN chown borg:borg /home/borg/.ssh/authorized_keys; chmod 600 /home/borg/.ssh/authorized_keys;
 

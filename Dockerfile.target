@@ -1,13 +1,14 @@
 FROM alpine
 
 # install openssh and borgbackup
-RUN apk add openssh-server borgbackup bash
+RUN apk add openssh-server borgbackup bash sudo
 RUN ssh-keygen -A; adduser --disabled-password borg; adduser --disabled-password s4admin;
 RUN mkdir /home/borg/.ssh; chown borg:borg /home/borg/.ssh; chmod 700 /home/borg/.ssh;
 RUN mkdir /home/s4admin/.ssh; chown s4admin:s4admin /home/s4admin/.ssh; chmod 700 /home/s4admin/.ssh;
 
-COPY authorized_keys /home/borg/.ssh/authorized_keys
-COPY admin_authorized_keys /home/s4admin/.ssh/authorized_keys
+COPY config/authorized_keys /home/borg/.ssh/authorized_keys
+COPY config/admin_authorized_keys /home/s4admin/.ssh/authorized_keys
+COPY config/s4admin /etc/sudoers.d/s4admin
 
 RUN chown borg:borg /home/borg/.ssh/authorized_keys; chmod 600 /home/borg/.ssh/authorized_keys;
 RUN chown s4admin:s4admin /home/s4admin/.ssh/authorized_keys; chmod 600 /home/s4admin/.ssh/authorized_keys;
