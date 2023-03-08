@@ -22,5 +22,9 @@ function create_double_size_file() {
         echo "Not enough space to create file of size $doubled"
         exit 1
     fi
+    # if double less that 120MB, set to 120MB
+    if [ $doubled -lt 120 ]; then
+        doubled=120
+    fi
     dd if=/dev/zero of=$2 bs=1M count=$doubled
 }

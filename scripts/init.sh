@@ -73,4 +73,10 @@ if [ -z "$NODOCKER" ]; then
      --opt device=$(get_loop_device_for_file $VOL_DIR/$VOL) $VOL
 fi
 
+# mount volume at /tmp and copy privkey to .s4/id_ed25519
+mount $(get_loop_device_for_file $VOL_DIR/$VOL) /tmp
+mkdir -p /tmp/.s4
+cp ~/.ssh/id_ed25519-$VOL /tmp/.s4/id_ed25519
+umount /tmp
+
 
