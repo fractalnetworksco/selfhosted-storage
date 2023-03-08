@@ -31,3 +31,7 @@ function write_generation() {
     echo $(get_generation $1) > $2
     # flush all writes
 }
+
+function cleanup_snapshots() {
+    btrfs sub list $1|awk '{print $9}'|while read subvol; do btrfs sub delete /s4/$subvol; done
+}

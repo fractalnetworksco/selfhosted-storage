@@ -41,14 +41,18 @@ while true; do
             echo "Failed to replicate borg snapshot"
             exit 1
         fi
+        # cleanup old snapshots
+        cleanup_snapshots /s4/snapshots
         # write current_time to /s4/.s4/last_replicated
         export TZ='America/Chicago'
         echo $(date) > /s4/.s4/last_replicated
+        # write out size of volume in bytes
+        du -sm /s4/data | cut -f1 > /s4/.s4/volume_size
         cd ../../..
         sync
         prev_generation=$(get_generation $1)
     else
         echo "No new snapshot"
     fi
-    sleep 1
+    sleep 15
 done
