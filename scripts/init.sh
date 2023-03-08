@@ -17,7 +17,6 @@ cd $1
 # set VOL to $2 if it set, otherwise set to basename of dir referenced by $1
 [ -n "$2" ] && VOL=$2 || VOL=$(basename $(pwd))
 
-echo "Creating s4 volume: $VOL"
 
 # read --remote argument from command line
 while [[ $# -gt 0 ]]; do
@@ -28,11 +27,18 @@ while [[ $# -gt 0 ]]; do
             shift # past argument
             shift # past value
             ;;
+        --catalog)
+            CATALOG="$2"
+            shift # past argument
+            shift # past value
+            ;;
         *)    # unknown option
             shift # past argument
             ;;
     esac
 done
+
+echo "Creating s4 volume: $VOL"
 # if --remote is set init borg repo
 if [ -n "$REMOTE" ]; then
     # create borg repo
@@ -40,11 +46,11 @@ if [ -n "$REMOTE" ]; then
     ssh-keygen -t ed25519 -N '' -f ~/.ssh/id_ed25519-$VOL
     borg --rsh "ssh -o StrictHostKeyChecking=accept-new -p $REMOTE_PORT" init --encryption=none $REMOTE/$VOL
     # strip everything afte : from the remote
-    REMOTE=$(echo $REMOTE | cut -d':' -f1)
+    SSH_REMOTE=$(echo $REMOTE | cut -d':' -f1)
     PUB_KEY=$(<~/.ssh/id_ed25519-$VOL.pub)
     # s4admin uses sudo to run su_add_ssh_key which calls add_ssh_key as the borg user
     # replace ssh user borg with s4admin user
-    ADMIN_REMOTE=$(echo $REMOTE | sed "s/borg/s4admin/")
+    ADMIN_REMOTE=$(echo $SSH_REMOTE | sed "s/borg/s4admin/")
 
     # add volume ssh key to borg user's authorized_keys, only s4admin can do this
     ssh -p $REMOTE_PORT $ADMIN_REMOTE sudo su_add_ssh_key $VOL \"$PUB_KEY\"
@@ -86,7 +92,14 @@ fi
 mount $LOOP_DEV /tmp
 mkdir -p /tmp/.s4
 cp ~/.ssh/id_ed25519-$VOL /tmp/.s4/id_ed25519
-write_config /tmp/.s4/config $VOL $REMOTE:/volumes/$VOL
+
+# if CATALOG is set TYPE to catalog
+if [ -n "$CATALOG" ]; then
+    TYPE=catalogs
+else
+    TYPE=volumes
+fi
+write_config /tmp/.s4/config $VOL $REMOTE/$VOL
 
 # copy data to new volume
 echo "Copying data to new volume..."
