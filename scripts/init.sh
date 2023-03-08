@@ -37,7 +37,7 @@ if [ -n "$REMOTE" ]; then
     # create borg repo
     # generate an ssh keypair with no interaction
     ssh-keygen -t ed25519 -N '' -f ~/.ssh/id_ed25519-$VOL
-    borg --rsh "ssh -p $REMOTE_PORT" init --encryption=none $REMOTE/$VOL
+    borg --rsh "ssh -o StrictHostKeyChecking=accept-new -p $REMOTE_PORT" init --encryption=none $REMOTE/$VOL
     # strip everything afte : from the remote
     REMOTE=$(echo $REMOTE | cut -d':' -f1)
     PUB_KEY=$(<~/.ssh/id_ed25519-$VOL.pub)
@@ -57,32 +57,39 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+# get the next available loop device
+# we need to make sure loop device name is consistent across reboots so we
+# store the loop device name in the backing file
+# this is because we cannot update a docker volume once
+# it is created and would have to recreat the volume otherwise
+LOOP_DEV=$(get_next_loop_device)
 
-
+LOOP_DEV_FILE=$VOL_DIR/$VOL-$(basename $LOOP_DEV)
 # allocate file twice the size of the current directory being initialized
-create_double_size_file $(pwd) $VOL_DIR/$VOL
+create_double_size_file $(pwd) $LOOP_DEV_FILE
 
 # create loop device
-create_loop_device $VOL_DIR/$VOL
+create_loop_device $LOOP_DEV $LOOP_DEV_FILE
 
 # format loop device btrfs
-mkfs.btrfs $(get_loop_device_for_file $VOL_DIR/$VOL)
+mkfs.btrfs $LOOP_DEV
 
 # create btrfs backed docker volume
 # IF $NODOCKER is set, don't create docker volume
 if [ -z "$NODOCKER" ]; then
     docker volume create --label s4.volume --driver local --opt type=btrfs\
-     --opt device=$(get_loop_device_for_file $VOL_DIR/$VOL) $VOL
+     --opt device=$LOOP_DEV $VOL
 fi
 
 # mount volume at /tmp and copy privkey to .s4/id_ed25519
-mount $(get_loop_device_for_file $VOL_DIR/$VOL) /tmp
+mount $LOOP_DEV /tmp
 mkdir -p /tmp/.s4
 cp ~/.ssh/id_ed25519-$VOL /tmp/.s4/id_ed25519
 
 # copy data to new volume
 echo "Copying data to new volume..."
-cp -r . /tmp
+mkdir /tmp/data /tmp/snapshots
+cp -r . /tmp/data
 umount /tmp
 echo "Done."
 
