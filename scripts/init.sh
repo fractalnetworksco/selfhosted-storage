@@ -41,13 +41,15 @@ if [ -n "$REMOTE" ]; then
     # strip everything afte : from the remote
     REMOTE=$(echo $REMOTE | cut -d':' -f1)
     PUB_KEY=$(<~/.ssh/id_ed25519-$VOL.pub)
-    echo $PUB_KEY
     # s4admin uses sudo to run su_add_ssh_key which calls add_ssh_key as the borg user
     # replace ssh user borg with s4admin user
     ADMIN_REMOTE=$(echo $REMOTE | sed "s/borg/s4admin/")
 
     # add volume ssh key to borg user's authorized_keys, only s4admin can do this
     ssh -p $REMOTE_PORT $ADMIN_REMOTE sudo su_add_ssh_key $VOL \"$PUB_KEY\"
+else
+    echo "Error: You must specify a remote for $VOL with --remote borg@remote:/volumes"
+    exit 1
 fi
 # exit if not successful
 if [ $? -ne 0 ]; then
@@ -77,6 +79,12 @@ fi
 mount $(get_loop_device_for_file $VOL_DIR/$VOL) /tmp
 mkdir -p /tmp/.s4
 cp ~/.ssh/id_ed25519-$VOL /tmp/.s4/id_ed25519
+
+# copy data to new volume
+echo "Copying data to new volume..."
+cp -r . /tmp
 umount /tmp
+echo "Done."
+
 
 
