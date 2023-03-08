@@ -25,3 +25,13 @@ function get_config() {
         fi
     done < "$1"
 }
+
+function write_config() {
+    # declare heredoc with sample ini file
+    cat << EOF > $1
+[volume]
+name = $2
+[remote]
+url = $3
+EOF
+}

@@ -10,6 +10,7 @@ VOL_DIR=/var/lib/fractal
 
 source $SCRIPT_DIR/double.sh
 source $SCRIPT_DIR/loop_dev.sh
+source $SCRIPT_DIR/config.sh
 
 cd $1
 
@@ -85,6 +86,7 @@ fi
 mount $LOOP_DEV /tmp
 mkdir -p /tmp/.s4
 cp ~/.ssh/id_ed25519-$VOL /tmp/.s4/id_ed25519
+write_config /tmp/.s4/config $VOL $REMOTE:/volumes/$VOL
 
 # copy data to new volume
 echo "Copying data to new volume..."
