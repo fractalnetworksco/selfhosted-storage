@@ -26,3 +26,6 @@ fallocate:
 losetup:
 	losetup -fP /var/lib/fractal/btrfs.img
 
+target:
+	docker rm -f s4-target-dev || true
+	docker run --name s4-target-dev -v /mnt/catalogs:/catalogs -v /mnt/volumes:/volumes --restart always -p 2222:22 -d s4-target:latest
