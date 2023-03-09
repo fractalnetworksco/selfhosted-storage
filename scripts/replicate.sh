@@ -25,15 +25,34 @@ REMOTE=$(get_config /s4/.s4/config remote)
 VOLUME=$(get_config /s4/.s4/config volume)
 echo "Starting replication loop for $VOLUME to $REMOTE"
 
+# store last positional argument as SUBVOLUME
+SUBVOLUME=${@: -1}
+
+# default interval to 1 second
+REPLICATION_INTERVAL=1
+while [[ $# -gt 0 ]]; do
+    key="$1"
+    case $key in
+        --interval)
+            REPLICATION_INTERVAL="$2"
+            shift # past argument
+            shift # past value
+            ;;
+        *)    # unknown option
+            shift # past argument
+            ;;
+    esac
+done
+
 prev_generation=$(cat $GENERATION_FILE)
 while true; do
 
-    generation=$(get_generation $1)
+    generation=$(get_generation $SUBVOLUME)
     # check if the generation has changed since the last snapshot
     if [ $generation -ne $prev_generation ]; then
         echo "Taking new snapshot"
         # create a read-only snapshot of the subvolume
-        take_snapshot $1 $GENERATION_FILE $generation
+        take_snapshot $SUBVOLUME $GENERATION_FILE $generation
         cd /s4/snapshots/snapshot-$generation/data
         borg create --progress $REMOTE::$VOLUME-$generation .
         # exit if last command not successful
@@ -50,9 +69,9 @@ while true; do
         du -sm /s4/data | cut -f1 > /s4/.s4/volume_size
         cd ../../..
         sync
-        prev_generation=$(get_generation $1)
+        prev_generation=$(get_generation $SUBVOLUME)
     else
         echo "No new snapshot"
     fi
-    sleep 15
+    sleep $REPLICATION_INTERVAL
 done

@@ -93,12 +93,6 @@ mount $LOOP_DEV /tmp
 mkdir -p /tmp/.s4
 cp ~/.ssh/id_ed25519-$VOL /tmp/.s4/id_ed25519
 
-# if CATALOG is set TYPE to catalog
-if [ -n "$CATALOG" ]; then
-    TYPE=catalogs
-else
-    TYPE=volumes
-fi
 write_config /tmp/.s4/config $VOL $REMOTE/$VOL
 
 # copy data to new volume
