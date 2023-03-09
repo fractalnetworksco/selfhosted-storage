@@ -1,9 +1,8 @@
 #!/bin/bash
 set -u
 
-# shell script that creates a read-only snapshot of a btrfs subvolume if the generation has changed since the last snapshot
-# usage: replicate.sh <subvolume>
 SCRIPT_DIR=$(dirname $(readlink -f $0))
+source $SCRIPT_DIR/base.sh
 source $SCRIPT_DIR/config.sh
 source $SCRIPT_DIR/btrfs.sh
 
@@ -19,10 +18,10 @@ else
 fi
 
 REMOTE_PORT=${PORT:-2222}
-export BORG_RSH="ssh -p $REMOTE_PORT -o BatchMode=yes -i /s4/.s4/id_ed25519 -o StrictHostKeyChecking=accept-new"
-export BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK=yes
 REMOTE=$(get_config /s4/.s4/config remote)
 VOLUME=$(get_config /s4/.s4/config volume)
+export BORG_RSH="ssh -p $REMOTE_PORT -o BatchMode=yes -i /s4/.s4/id_ed25519-$VOLUME -o StrictHostKeyChecking=accept-new"
+export BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK=yes
 echo "Starting replication loop for $VOLUME to $REMOTE"
 
 # store last positional argument as SUBVOLUME
@@ -44,7 +43,8 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-prev_generation=$(cat $GENERATION_FILE)
+# set to 0 so we always replicate a snapshot on the first run
+prev_generation=0
 while true; do
 
     generation=$(get_generation $SUBVOLUME)

@@ -29,9 +29,20 @@ function take_snapshot() {
 function write_generation() {
     # write the generation to a file
     echo $(get_generation $1) > $2
-    # flush all writes
 }
 
 function cleanup_snapshots() {
     btrfs sub list $1|awk '{print $9}'|while read subvol; do btrfs sub delete /s4/$subvol; done
 }
+
+function create_subvolume() {
+    btrfs subvolume create $1
+}
+
+
+# if pwd is btrfs set BTRFS to true
+if is_btrfs .; then
+    export BTRFS=true
+else
+    export BTRFS=false
+fi
