@@ -1,8 +1,23 @@
 #!/bin/bash
 
+function blkid_sudo() {
+    if [[ $(id -u) -ne 0 ]]; then
+        sudo blkid $1
+    else
+        blkid $1
+    fi
+}
+
+function btrfs_sudo() {
+    if [[ $(id -u) -ne 0 ]]; then
+        sudo btrfs $@
+    else
+        btrfs $@
+    fi
+}
 
 function is_btrfs() {
-    if [[ $(blkid $(get_device $1)) =~ "btrfs" ]]; then
+    if [[ $(blkid_sudo $(get_device $1)) =~ "btrfs" ]]; then
         return 0
     else
         return 1
@@ -17,12 +32,12 @@ function get_device() {
 
 function get_generation() {
     # get the generation of a subvolume
-    btrfs subvolume show $1 | grep Generation | awk '{print $2}'
+    btrfs_sudo subvolume show $1 | grep Generation | awk '{print $2}'
 }
 
 function take_snapshot() {
     # create a read-only snapshot of the subvolume
-    btrfs subvolume snapshot -r $1 snapshots/snapshot-$3
+    btrfs_sudo subvolume snapshot -r $1 snapshots/snapshot-$3
     write_generation $1 $2
 }
 
@@ -32,13 +47,21 @@ function write_generation() {
 }
 
 function cleanup_snapshots() {
-    btrfs sub list $1|awk '{print $9}'|while read subvol; do btrfs sub delete /s4/$subvol; done
+    btrfs_sudo sub list $1|awk '{print $9}'|while read subvol; do btrfs sub delete /s4/$subvol; done
 }
 
 function create_subvolume() {
-    btrfs subvolume create $1
+    btrfs_sudo subvolume create $1
 }
 
+function mkfs_btrfs() { 
+    # create a btrfs filesystem
+    if [[ $(id -u) -ne 0 ]]; then
+        sudo mkfs.btrfs $1
+    else
+        mkfs.btrfs $1
+    fi
+}
 
 # if pwd is btrfs set BTRFS to true
 if is_btrfs .; then

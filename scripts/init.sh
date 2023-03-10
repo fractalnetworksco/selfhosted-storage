@@ -12,6 +12,7 @@ source $SCRIPT_DIR/double.sh
 source $SCRIPT_DIR/loop_dev.sh
 source $SCRIPT_DIR/config.sh
 source $SCRIPT_DIR/s4_volume.sh
+source $SCRIPT_DIR/btrfs.sh
 
 cd $1
 
@@ -55,7 +56,7 @@ if [ -n "$REMOTE" ]; then
     create_loop_device $LOOP_DEV $LOOP_DEV_FILE
 
     # format loop device btrfs
-    mkfs.btrfs $LOOP_DEV
+    mkfs_btrfs $LOOP_DEV
 
     # create btrfs backed docker volume
     # IF $NODOCKER is set, don't create docker volume
@@ -65,15 +66,22 @@ if [ -n "$REMOTE" ]; then
     fi
     # create borg repo
     borg --rsh "ssh -o StrictHostKeyChecking=accept-new -p $REMOTE_PORT" init --encryption=none $REMOTE/$VOL
+    TMP_MOUNT=/mnt/tmp
+    mkdir_sudo -p $TMP_MOUNT
+    mount_sudo $LOOP_DEV $TMP_MOUNT
+    #chown /tmp with current user and group id
+    # store current user and group id in variables
+    USER_ID=$(id -u)
+    GROUP_ID=$(id -g)
+    chown_sudo $USER_ID:$GROUP_ID $TMP_MOUNT
+    cd $TMP_MOUNT
 
-    mount $LOOP_DEV /tmp
-    cd /tmp
     create_s4_volume $REMOTE/$VOL
     cd -
 
     # strip everything afte : from the remote
     SSH_REMOTE=$(echo $REMOTE | cut -d':' -f1)
-    PUB_KEY=$(</tmp/.s4/id_ed25519-$VOL.pub)
+    PUB_KEY=$(<$TMP_MOUNT/.s4/id_ed25519-$VOL.pub)
     # s4admin uses sudo to run su_add_ssh_key which calls add_ssh_key as the borg user
     # replace ssh user borg with s4admin user
     ADMIN_REMOTE=$(echo $SSH_REMOTE | sed "s/borg/s4admin/")
@@ -90,15 +98,8 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-
-
 # copy data to new volume
 echo "Copying data to new volume..."
-cp -r . /tmp/data
-umount /tmp
+cp -r . $TMP_MOUNT/data
+umount_sudo $TMP_MOUNT
 echo "Done."
-
-
-
-
-

@@ -1,6 +1,13 @@
 #!/bin/bash
 #/code/scripts/double.sh $(pwd) myfile
 # create a file of double the size of the current directory
+function dd_sudo() {
+    if [[ $(id -u) -ne 0 ]]; then
+        sudo dd $@
+    else
+        dd $@
+    fi
+}
 
 function create_double_size_file() {
     # create a file of double the size of the current directory + 20%
@@ -26,5 +33,5 @@ function create_double_size_file() {
     if [ $doubled -lt 120 ]; then
         doubled=120
     fi
-    dd if=/dev/zero of=$2 bs=1M count=$doubled
+    dd_sudo if=/dev/zero of=$2 bs=1M count=$doubled
 }
