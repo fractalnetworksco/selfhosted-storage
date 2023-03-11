@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # list volumes in the repo
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 source $SCRIPT_DIR/config.sh
@@ -10,11 +9,11 @@ S4_REMOTE_PORT=${S4_REMOTE_PORT:-2222}
 # for
 while IFS='=' read -r remote
 do
-    echo "[$remote]"
+    # replace s4admin with borg in $remote
+    vol_remote=${remote/s4admin/borg}
+    echo "[$vol_remote]"
     while IFS='=' read -r volume
     do
-        # replace s4admin with borg in $remote
-        remote=${remote/s4admin/borg}
-        echo "$remote:/volumes/$volume"
+        echo "$vol_remote:/volumes/$volume"
     done < <(ssh -p $S4_REMOTE_PORT $remote "ls -1 /volumes" </dev/null) #https://unix.stackexchange.com/a/66178
 done < <(get_config ~/.s4/config "remote")
