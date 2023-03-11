@@ -13,6 +13,8 @@ do
     echo "[$remote]"
     while IFS='=' read -r volume
     do
+        # replace s4admin with borg in $remote
+        remote=${remote/s4admin/borg}
         echo "$remote:/volumes/$volume"
     done < <(ssh -p $S4_REMOTE_PORT $remote "ls -1 /volumes" </dev/null) #https://unix.stackexchange.com/a/66178
 done < <(get_config ~/.s4/config "remote")

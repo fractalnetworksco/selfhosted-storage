@@ -47,7 +47,7 @@ function write_generation() {
 }
 
 function cleanup_snapshots() {
-    btrfs_sudo sub list $1|awk '{print $9}'|while read subvol; do btrfs sub delete /s4/$subvol; done
+    btrfs_sudo sub list $1|awk '{print $9}'|while read subvol; do btrfs_sudo sub delete $subvol; done
 }
 
 function create_subvolume() {
