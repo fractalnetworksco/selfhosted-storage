@@ -6,9 +6,6 @@ source $SCRIPT_DIR/base.sh
 source $SCRIPT_DIR/config.sh
 source $SCRIPT_DIR/btrfs.sh
 
-VOLUME_PATH=$(pwd)
-
-GENERATION_FILE=$VOLUME_PATH/.s4/generation
 
 # read generation from $3
 if [ -f $GENERATION_FILE ]; then
@@ -56,10 +53,10 @@ while true; do
         echo $(pwd)
         # create a read-only snapshot of the subvolume
         take_snapshot $SUBVOLUME $GENERATION_FILE $generation
-        cd $VOLUME_PATH/snapshots/snapshot-$generation/data
+        cd $VOLUME_PATH/snapshots/snapshot-$generation
         pwd
         borg create --progress $REMOTE::$VOLUME-$generation .
-        cd ../../..
+        cd ../../
         # exit if last command not successful
         if [ $? -ne 0 ]; then
             echo "Failed to replicate borg snapshot"

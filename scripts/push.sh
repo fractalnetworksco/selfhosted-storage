@@ -1,4 +1,7 @@
 #!/bin/bash
 
-# push a s4 borg archive to the remote server
 
+SCRIPT_DIR=$(dirname $(readlink -f $0))
+source $SCRIPT_DIR/base.sh
+
+push $(pwd)
