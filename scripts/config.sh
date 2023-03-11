@@ -35,3 +35,12 @@ name = $2
 url = $3
 EOF
 }
+
+function write_remote() {
+    mkdir -p ~/.s4
+    # declare heredoc with sample ini file
+    cat << EOF > $1
+[remote]
+url = $2
+EOF
+}
