@@ -2,14 +2,21 @@
 
 SCRIPT_DIR=$(dirname $(readlink -f $0))
 
+source $SCRIPT_DIR/base.sh
 source $SCRIPT_DIR/config.sh
 source $SCRIPT_DIR/borg.sh
+source $SCRIPT_DIR/btrfs.sh
 
 # if $1 use it as the remote
 if [ -n "$1" ]; then
     export BORG_RSH="ssh -p 2222 -o BatchMode=yes -o StrictHostKeyChecking=accept-new"
     # volume is the part after the last slash
-    REMOTE_VOLUME=${1##*/}
+    # if $2 set it as REMOTE_VOLUME
+    if [ -n "$2" ]; then
+        REMOTE_VOLUME=$2
+    else
+        REMOTE_VOLUME=${1##*/}
+    fi
     REMOTE=$1
 else
     # if no .s4 dir exists, exit
@@ -33,7 +40,19 @@ fi
 
 # if REMOTE_VOLUME is  set
 if [ -n "$REMOTE_VOLUME" ]; then
-    mkdir $REMOTE_VOLUME
+    # if current volume is btrfs create subvolume else exit
+    # if $BTRFS is true create subvolume
+    if [ "$BTRFS" = true ]; then
+        create_subvolume $REMOTE_VOLUME
+        set_owner_current_user $REMOTE_VOLUME
+    else
+        # if NO_BTRFS is defined continue
+        if [ -z "$NO_BTRFS" ]; then
+            echo "Current volume is not btrfs, set NO_BTRFS if you are ok with cloning to a non-btrfs volume"
+            exit 1
+        fi
+        mkdir $REMOTE_VOLUME
+    fi
     cd $REMOTE_VOLUME
 fi
 

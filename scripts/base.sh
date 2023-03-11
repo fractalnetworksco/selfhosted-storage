@@ -36,3 +36,8 @@ function mkdir_sudo(){
         mkdir $@
     fi
 }
+
+
+function set_owner_current_user() {
+    chown_sudo $(id -u):$(id -g) $1
+}

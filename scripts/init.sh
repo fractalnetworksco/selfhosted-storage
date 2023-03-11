@@ -71,9 +71,7 @@ if [ -n "$REMOTE" ]; then
     mount_sudo $LOOP_DEV $TMP_MOUNT
     #chown /tmp with current user and group id
     # store current user and group id in variables
-    USER_ID=$(id -u)
-    GROUP_ID=$(id -g)
-    chown_sudo $USER_ID:$GROUP_ID $TMP_MOUNT
+    set_owner_current_user $TMP_MOUNT
     cd $TMP_MOUNT
 
     create_s4_volume $REMOTE/$VOL
