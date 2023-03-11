@@ -3,16 +3,11 @@
 #script dir
 SCRIPT_DIR=$(dirname $(readlink -f $0))
 # DEFAULT PORT to 2222 if not specified
-REMOTE_PORT=${PORT:-2222}
 
 #volume dir
 VOL_DIR=/var/lib/fractal
 
-source $SCRIPT_DIR/double.sh
-source $SCRIPT_DIR/loop_dev.sh
-source $SCRIPT_DIR/config.sh
-source $SCRIPT_DIR/s4_volume.sh
-source $SCRIPT_DIR/btrfs.sh
+source $SCRIPT_DIR/base.sh
 
 cd $1
 
@@ -61,11 +56,16 @@ if [ -n "$REMOTE" ]; then
     # create btrfs backed docker volume
     # IF $NODOCKER is set, don't create docker volume
     if [ -z "$NODOCKER" ]; then
+        #if docker volume exists, remove it
+        if docker volume ls -q | grep -q $VOL; then
+            echo "Docker volume with name $VOL already exists"
+            exit 1
+        fi
         docker volume create --label s4.volume --driver local --opt type=btrfs\
         --opt device=$LOOP_DEV $VOL
     fi
     # create borg repo
-    borg --rsh "ssh -o StrictHostKeyChecking=accept-new -p $REMOTE_PORT" init --encryption=none $REMOTE/$VOL
+    borg init --encryption=none $REMOTE/$VOL
     TMP_MOUNT=/mnt/tmp
     mkdir_sudo -p $TMP_MOUNT
     mount_sudo $LOOP_DEV $TMP_MOUNT
@@ -85,7 +85,7 @@ if [ -n "$REMOTE" ]; then
     ADMIN_REMOTE=$(echo $SSH_REMOTE | sed "s/borg/s4admin/")
 
     # add volume ssh key to borg user's authorized_keys, only s4admin can do this
-    ssh -p $REMOTE_PORT $ADMIN_REMOTE sudo su_add_ssh_key $VOL \"$PUB_KEY\"
+    ssh -p $S4_REMOTE_PORT $ADMIN_REMOTE sudo su_add_ssh_key $VOL \"$PUB_KEY\"
 else
     echo "Error: You must specify a remote for $VOL with --remote borg@remote:/volumes"
     exit 1

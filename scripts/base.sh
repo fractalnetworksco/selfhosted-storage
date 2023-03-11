@@ -1,11 +1,20 @@
 #!/bin/bash
-
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 source $SCRIPT_DIR/config.sh
 source $SCRIPT_DIR/btrfs.sh
+source $SCRIPT_DIR/double.sh
+source $SCRIPT_DIR/loop_dev.sh
+source $SCRIPT_DIR/s4_volume.sh
 
 export VOLUME_PATH=$(pwd)
+export VOLUME_NAME=$(basename $VOLUME_PATH)
 export GENERATION_FILE=$VOLUME_PATH/.s4/generation
+REMOTE=$(get_config $VOLUME_PATH/.s4/config remote)
+VOLUME=$(get_config $VOLUME_PATH/.s4/config volume)
+
+S4_REMOTE_PORT=${S4_REMOTE_PORT:-2222}
+export BORG_RSH="ssh -p $S4_REMOTE_PORT -o BatchMode=yes -i $VOLUME_PATH/.s4/id_ed25519-$VOLUME -o StrictHostKeyChecking=accept-new"
+export BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK=yes
 
 function mount_sudo() {
     if [[ $(id -u) -ne 0 ]]; then
@@ -54,9 +63,9 @@ function push() {
         echo $(pwd)
         # create a read-only snapshot of the subvolume
         take_snapshot $SUBVOLUME $GENERATION_FILE $generation
-        cd $VOLUME_PATH/snapshots/snapshot-$generation/data
+        cd $VOLUME_PATH/snapshots/snapshot-$generation
         borg create --progress $REMOTE::$VOLUME-$generation .
-        cd ../../..
+        cd ../../
         # exit if last command not successful
         if [ $? -ne 0 ]; then
             echo "Failed to replicate borg snapshot"

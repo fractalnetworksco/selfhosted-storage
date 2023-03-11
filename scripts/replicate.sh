@@ -3,8 +3,6 @@ set -u
 
 SCRIPT_DIR=$(dirname $(readlink -f $0))
 source $SCRIPT_DIR/base.sh
-source $SCRIPT_DIR/config.sh
-source $SCRIPT_DIR/btrfs.sh
 
 
 # read generation from $3
@@ -16,11 +14,6 @@ else
     write_generation $1 $GENERATION_FILE
 fi
 
-REMOTE_PORT=${PORT:-2222}
-REMOTE=$(get_config $VOLUME_PATH/.s4/config remote)
-VOLUME=$(get_config $VOLUME_PATH/.s4/config volume)
-export BORG_RSH="ssh -p $REMOTE_PORT -o BatchMode=yes -i $VOLUME_PATH/.s4/id_ed25519-$VOLUME -o StrictHostKeyChecking=accept-new"
-export BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK=yes
 echo "Starting replication loop for $VOLUME to $REMOTE"
 
 # store last positional argument as SUBVOLUME

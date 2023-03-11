@@ -1,7 +1,8 @@
 #!/bin/bash
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-source $SCRIPT_DIR/base.sh
+# infinite source loop, do we need it?
+#source $SCRIPT_DIR/base.sh
 
 function create_s4_volume() {
     # usage: create_volume borg@192.168.1.190:/volumes/myvolume

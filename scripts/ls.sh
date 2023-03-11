@@ -1,10 +1,7 @@
 #!/bin/bash
 # list volumes in the repo
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-source $SCRIPT_DIR/config.sh
-
-
-S4_REMOTE_PORT=${S4_REMOTE_PORT:-2222}
+source $SCRIPT_DIR/base.sh
 
 # for
 while IFS='=' read -r remote
