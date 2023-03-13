@@ -8,26 +8,26 @@ s4 also includes optional first-class support for real-time docker volume replic
 ## Quick Start
 1. Create an s4 volume from an existing folder:
 ```
-cd my-existing-folder
-s4 init
+[~/]$ cd my-existing-folder
+[~/my-existing-folder]$ s4 init
 Initialized empty s4 volume in /home/fractal-networks/my-existing-folder/.s4/
 ```
 2. Add a remote to your new s4 volume: 
 (borgbackup must be installed on the remote)
 ```
-my-existing-folder$ s4 remote add origin s4@mys4remote:/volumes
+[~/my-existing-folder]$ s4 remote add origin s4@mys4remote:/volumes
 ```
 3. Create a 10MB file of random data and push the volume to the remote:
 ```
-my-existing-folder$ dd if=/dev/urandom of=10MB.dat bs=1M count=10
+[~/my-existing-folder]$ dd if=/dev/urandom of=10MB.dat bs=1M count=10
 10+0 records in
 10+0 records out
 10485760 bytes (10 MB, 10 MiB) copied, 0.0135028 s, 777 MB/s
-my-existing-folder$ s4 push origin
+[~/my-existing-folder]$ s4 push origin
 ```
 4. From another host, clone the `my-existing-folder` volume:
 ```
-$ s4 clone s4@mys4remote:/volumes/my-existing-folder
+[~/]$ s4 clone s4@mys4remote:/volumes/my-existing-folder
 Cloning into 'my-existing-folder'...
 ```
 
@@ -53,7 +53,7 @@ To enable replication for an s4 volumes, simply run `s4 replicate` on the host w
 
 s4 ships with a docker container that handles volumes replication. Here's an example of how to use it:
 ```
-$ docker run --name my-existing-folder-replicator -v my-existing-folder:/s4 --workdir /s4 s4-agent:latest replicate
+~/$ docker run --name my-existing-folder-replicator -v my-existing-folder:/s4 --workdir /s4 s4-agent:latest replicate
 ```
 
 ## Development
