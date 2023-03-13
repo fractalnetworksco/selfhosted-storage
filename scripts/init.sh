@@ -9,6 +9,8 @@ VOL_DIR=/var/lib/fractal
 
 source $SCRIPT_DIR/base.sh
 
+init_volume
+
 cd $1
 
 # set VOL to $2 if it set, otherwise set to basename of dir referenced by $1

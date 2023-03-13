@@ -6,15 +6,21 @@ source $SCRIPT_DIR/double.sh
 source $SCRIPT_DIR/loop_dev.sh
 source $SCRIPT_DIR/s4_volume.sh
 
-export VOLUME_PATH=$(pwd)
-export VOLUME_NAME=$(basename $VOLUME_PATH)
-export GENERATION_FILE=$VOLUME_PATH/.s4/generation
-REMOTE=$(get_config $VOLUME_PATH/.s4/config remote)
-VOLUME=$(get_config $VOLUME_PATH/.s4/config volume)
-
 S4_REMOTE_PORT=${S4_REMOTE_PORT:-2222}
-export BORG_RSH="ssh -p $S4_REMOTE_PORT -o BatchMode=yes -i $VOLUME_PATH/.s4/id_ed25519-$VOLUME -o StrictHostKeyChecking=accept-new"
-export BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK=yes
+
+function init_globals(){
+    export BORG_RSH="ssh -p $S4_REMOTE_PORT -o BatchMode=yes -o StrictHostKeyChecking=accept-new"
+}
+
+function init_volume(){
+    export VOLUME_PATH=$(pwd)
+    export VOLUME_NAME=$(basename $VOLUME_PATH)
+    export GENERATION_FILE=$VOLUME_PATH/.s4/generation
+    export REMOTE=$(get_config $VOLUME_PATH/.s4/config remote)
+    export VOLUME=$(get_config $VOLUME_PATH/.s4/config volume)
+    export BORG_RSH="ssh -p $S4_REMOTE_PORT -o BatchMode=yes -i $VOLUME_PATH/.s4/id_ed25519-$VOLUME -o StrictHostKeyChecking=accept-new"
+    export BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK=yes
+}
 
 function mount_sudo() {
     if [[ $(id -u) -ne 0 ]]; then

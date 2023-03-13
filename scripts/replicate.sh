@@ -4,6 +4,7 @@ set -u
 SCRIPT_DIR=$(dirname $(readlink -f $0))
 source $SCRIPT_DIR/base.sh
 
+init_volume
 
 # read generation from $3
 if [ -f $GENERATION_FILE ]; then
