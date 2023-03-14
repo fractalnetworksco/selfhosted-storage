@@ -32,3 +32,8 @@ target: docker
 
 install:
 	sudo ln -s `pwd`/s4.sh /usr/local/bin/s4
+
+
+borg:
+	sudo apt install libacl1-dev
+	pip install borgbackup

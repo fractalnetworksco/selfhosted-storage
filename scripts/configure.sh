@@ -10,6 +10,6 @@ if [ -f ~/.s4/config ]; then
 fi
 
 # prompt use for remote url
-read -p "Remote url: " REMOTE_URL
+read -p "Remote url [s4admin@s4.mydomain.com]: " REMOTE_URL
 # write remote url to config file
 write_remote ~/.s4/config $REMOTE_URL
