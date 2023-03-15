@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 
 # $1 name of the volume
 # $2 ssh pubkey
