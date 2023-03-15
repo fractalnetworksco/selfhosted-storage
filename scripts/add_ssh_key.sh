@@ -1,12 +1,12 @@
 #/bin/bash
 
-# $1 of the volume
+# $1 name of the volume
 # $2 ssh pubkey
 # $3 optional comment for key
 
 function add_volume_pubkey(){
-    # check if pubkey already exists in authorized_keys
-    if grep -q "$2" ~/.ssh/authorized_keys; then
+    # check if name or pubkey already exists in authorized_keys
+    if grep -q "$1" ~/.ssh/authorized_keys || grep -q "$2" ~/.ssh/authorized_keys; then
         exit 0
     fi
 

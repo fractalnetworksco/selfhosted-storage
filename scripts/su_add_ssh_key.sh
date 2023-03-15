@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# $1 of the volume
+# $1 name of the volume
 # $2 ssh pubkey
 # $3 optional comment for key
 
