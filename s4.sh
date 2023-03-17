@@ -15,4 +15,4 @@ SUBCOMMAND=$1
 shift
 
 # call the subcommand
-$SCRIPT_DIR/scripts/$SUBCOMMAND.sh $@
+$SCRIPT_DIR/scripts/$SUBCOMMAND.sh "$@"

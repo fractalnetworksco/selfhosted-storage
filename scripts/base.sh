@@ -13,11 +13,40 @@ function init_globals(){
 }
 
 function init_volume(){
+    # Args:
+    #   $1: Remote path
+    #   $2 [OPTIONAL]: Private key
+    #   $3 [OPTIONAL]: Public key
+
     export VOLUME_PATH=$(pwd)
     export VOLUME_NAME=$(basename $VOLUME_PATH)
+
+    # check if the volume is already initialized
+    if [ -d $VOLUME_PATH/.s4 ]; then
+        echo "Volume already initialized"
+        export REMOTE=$(get_config $VOLUME_PATH/.s4/config remote)
+        export VOLUME=$(get_config $VOLUME_PATH/.s4/config volume)
+
+    # initialize new volume
+    else
+        echo "Initializing volume $VOLUME_NAME at $VOLUME_PATH"
+
+        # check if private/public keys are provided, if so use them
+        # when creating volume
+        if [[ -n "$2" && -n "$3" ]]; then
+            # create s4 volume with provided private & public keys
+            echo "init_volume: Running create_s4_volume $1 $2 $3"
+            create_s4_volume "$1" "$2" "$3"
+
+        else
+            echo "init_volume: Not given keys. Will generate"
+            # create s4 volume that will generate private & public keys
+            echo "init_volume: Running create_s4_volume $1"
+            create_s4_volume "$1"
+        fi
+    fi
+
     export GENERATION_FILE=$VOLUME_PATH/.s4/generation
-    export REMOTE=$(get_config $VOLUME_PATH/.s4/config remote)
-    export VOLUME=$(get_config $VOLUME_PATH/.s4/config volume)
     export BORG_RSH="ssh -p $S4_REMOTE_PORT -o BatchMode=yes -i $VOLUME_PATH/.s4/id_ed25519-$VOLUME -o StrictHostKeyChecking=accept-new"
     export BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK=yes
 }
