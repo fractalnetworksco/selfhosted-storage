@@ -92,7 +92,7 @@ latest=$(get_latest_archive $REMOTE)
 # if not latest exit
 if [ -z "$latest" ]; then
     echo "No snapshots for $REMOTE_VOLUME archive found"
-    exit 404
+    exit 1
 fi
 
 # if REMOTE_VOLUME is set
