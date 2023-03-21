@@ -23,7 +23,7 @@ function init_volume(){
 
     # check if the volume is already initialized
     if [ -d $VOLUME_PATH/.s4 ]; then
-        echo "Volume already initialized"
+        echo "Volume $VOLUME_NAME already initialized"
         export REMOTE=$(get_config $VOLUME_PATH/.s4/config remote)
         export VOLUME=$(get_config $VOLUME_PATH/.s4/config volume)
 
@@ -47,7 +47,9 @@ function init_volume(){
     fi
 
     export GENERATION_FILE=$VOLUME_PATH/.s4/generation
-    export BORG_RSH="ssh -p $S4_REMOTE_PORT -o BatchMode=yes -i $VOLUME_PATH/.s4/id_ed25519-$VOLUME -o StrictHostKeyChecking=accept-new"
+    export PRIVATE_KEY_PATH="$VOLUME_PATH/.s4/id_ed25519-$VOLUME"
+    export PUBLIC_KEY_PATH="$VOLUME_PATH/.s4/id_ed25519-$VOLUME"
+    export BORG_RSH="ssh -p $S4_REMOTE_PORT -o BatchMode=yes -i $PRIVATE_KEY_PATH -o StrictHostKeyChecking=accept-new"
     export BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK=yes
 }
 

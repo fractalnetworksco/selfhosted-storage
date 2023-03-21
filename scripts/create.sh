@@ -19,51 +19,10 @@ source $SCRIPT_DIR/base.sh
 echo "Creating volume: $VOL"
 
 if [[ -n $VOL ]]; then
-    # get the next available loop device
-    # we need to make sure loop device name is consistent across reboots so we
-    # store the loop device name in the backing file
-    # this is because we cannot update a docker volume once
-    # it is created and would have to recreat the volume otherwise
-    LOOP_DEV=$(get_next_loop_device)
-
-    LOOP_DEV_FILE=$VOL_DIR/$VOL-$(basename $LOOP_DEV)
-    # allocate file twice the size of the current directory being initialized
-    create_double_size_file $(pwd) $LOOP_DEV_FILE
-
-    # create loop device
-    create_loop_device $LOOP_DEV $LOOP_DEV_FILE
-
-    echo "Created loop device"
-
-    # format loop device btrfs
-    mkfs_btrfs $LOOP_DEV
-
-    echo "Formatted $LOOP_DEV as BTRFS"
-
     # create btrfs backed docker volume
-    # IF $NODOCKER is set, don't create docker volume
-    if [ -z "$NODOCKER" ]; then
-        #if docker volume exists, remove it
-        if docker volume ls -q | grep -q $VOL; then
-            echo "Docker volume with name $VOL already exists"
-            exit 1
-        fi
-        docker volume create --label s4.volume --driver local --opt type=btrfs\
-        --opt device=$LOOP_DEV $VOL
-
-        echo "Created docker volume: $VOL"
-    fi
-
-    TMP_MOUNT=/mnt/tmp
-    mkdir_sudo -p $TMP_MOUNT
-    mount_sudo $LOOP_DEV $TMP_MOUNT
-    # chown /tmp with current user and group id
-    # store current user and group id in variables
-    set_owner_current_user $TMP_MOUNT
-    umount_sudo $TMP_MOUNT
-
+    create_btrfs_loop_device_and_volume $VOL
 else
-    echo "Usage: create <volume_path> <volume_name>"
+    echo "Usage: create <volume_name>"
     exit 1
 fi
 
