@@ -10,16 +10,27 @@ function dd_sudo() {
 }
 
 function create_double_size_file() {
-    # create a file of double the size of the current directory + 20%
-    # $1 is the directory to get the size of
-    # $2 is the file to create
+    # creates a file of double the size of the current directory
+
+    # args:
+    #   $1 is the directory to get the size of
+    #   $2 is the file to create
+    #   $3 is the size to use
 
     echo "Creating file that is double the size of $1 at $2"
+    # if $3 is not given, get the size of $1
+    if [ -z $3 ]; then
+        size=$(du -sm $1 | awk '{print $1}')
+    # $3 was given, so use that as the size
+    else
+        size=$3
+    fi
+
     if [ -f $2 ]; then
         echo "$2 already exists"
         exit 1
     fi
-    size=$(du -sm $1 | awk '{print $1}')
+
     doubled=$((size * 2))
     # make sure $1 has enough space + 20%
     FREE_SPACE=$(df -m $1 | awk 'NR==2{print $4}')
