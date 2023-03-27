@@ -29,6 +29,5 @@ function create_s4_volume() {
     VOLUME=${1##*/}
 
     # create .s4 directory as well as .s4/snapshot directory
-    mkdir -p .s4/snapshots
     echo "Created s4 volume $VOLUME"
 }

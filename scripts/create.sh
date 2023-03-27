@@ -35,14 +35,14 @@ LOOP_DEV_FILE=$LOOP_FILE_PATH-$(basename $LOOP_DEV)
 
 # if SIZE is set, create a file of that size
 if [ -n "$SIZE" ]; then
-    create_loop_file $(pwd) $LOOP_DEV_FILE $SIZE
+    create_loop_file $(pwd) $LOOP_DEV_FILE $SIZE &> /dev/null
 else
     # allocate file twice the size of the current directory being initialized
-    create_loop_file $(pwd) $LOOP_DEV_FILE
+    create_loop_file $(pwd) $LOOP_DEV_FILE &> /dev/null
 fi
 
 # create loop device
-create_loop_device $LOOP_DEV $LOOP_DEV_FILE
+create_loop_device $LOOP_DEV $LOOP_DEV_FILE &> /dev/null
 
 # format loop device btrfs
 mkfs_btrfs $LOOP_DEV &> /dev/null

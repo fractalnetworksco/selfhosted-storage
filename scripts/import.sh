@@ -3,6 +3,9 @@
 
 # usage: s4 import <loop_dev>
 
+set -ex
+
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 source $SCRIPT_DIR/base.sh
 
 # Parse optional arguments using getopts with long options
@@ -37,7 +40,7 @@ S4_TMP_PATH="/tmp/s4-tmp-$VOLUME_NAME"
 mkdir -p "$S4_TMP_PATH"
 
 # makes sure hidden files are moved as well
-cp -r $VOLUME_PATH $S4_TMP_PATH
+cp -a $VOLUME_PATH $S4_TMP_PATH
 
 # md5 the moved data. Make sure matches with original
 # md5 original data at directory
@@ -54,8 +57,10 @@ fi
 # mount at original directory
 mount_sudo $LOOP_DEV $VOLUME_PATH
 
+chown_sudo -R $USER:$USER $VOLUME_PATH
+
 # copy copied data into mounted directory
-cp -r $S4_TMP_PATH $VOLUME_PATH
+cp -a $S4_TMP_PATH/* $VOLUME_PATH
 
 # md5 that data. Make sure matches with original
 FINAL_MOVE_MD5="$(s4 md5_dir $VOLUME_PATH)"
@@ -68,15 +73,15 @@ if [ "$FINAL_MOVE_MD5" != "$MOVED_DATA_MD5" ]; then
 fi
 
 # create .s4 directory
-mkdir -p .s4/snapshots
+mkdir -p $VOLUME_PATH/.s4/snapshots
 
 # everything matches. Good to clean up backup
 # remove everything in backup directory
 rm -r $S4_TMP_PATH
 
-umount_sudo $LOOP_DEV
-
 # remove everything in original directory if no-preserve flag is set
 if [ -n "$NO_PRESERVE" ]; then
+    umount_sudo $VOLUME_PATH
     rm -r $VOLUME_PATH
+    mount_sudo $LOOP_DEV $VOLUME_PATH
 fi

@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -ex
 
 # usage:
 # s4 init <volume_name> --docker --path <path_to_init>
@@ -51,7 +51,7 @@ fi
 cd $VOLUME_PATH
 
 # set BTRFS variable to true if volume is btrfs
-is_btrfs $VOLUME_PATH
+check_btrfs $VOLUME_PATH
 
 export VOLUME_NAME=$(basename $VOLUME_PATH)
 

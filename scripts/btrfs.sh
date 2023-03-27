@@ -71,7 +71,7 @@ function mkfs_btrfs() {
     fi
 }
 
-function is_btrfs(){
+function check_btrfs(){
     # if pwd is btrfs set BTRFS to true
     if is_btrfs "$1"; then
         export BTRFS=true

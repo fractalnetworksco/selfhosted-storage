@@ -5,11 +5,11 @@ source $SCRIPT_DIR/config.sh
 source $SCRIPT_DIR/loop_dev.sh
 source $SCRIPT_DIR/s4_volume.sh
 
-S4_REMOTE_PORT=${S4_REMOTE_PORT:-2222}
-S4_LOOP_DEV_PATH=${S4_LOOP_DEV_PATH:-/var/lib/fractal}
+export S4_REMOTE_PORT=${S4_REMOTE_PORT:-2222}
+export S4_LOOP_DEV_PATH=${S4_LOOP_DEV_PATH:-/var/lib/fractal}
 
 # ensure that volume directory exists
-mkdir -p $LOOP_FILE_PATH
+mkdir -p $S4_LOOP_DEV_PATH
 
 function mount_sudo() {
     if [[ $(id -u) -ne 0 ]]; then

@@ -1,4 +1,5 @@
 #!/bin/bash
+set -x
 
 function losetup_sudo() {
     if [[ $(id -u) -ne 0 ]]; then
@@ -149,7 +150,7 @@ function create_loop_file() {
 
     doubled=$((size * 2))
     # make sure $1 has enough space + 20%
-    FREE_SPACE=$(df -m $1 | awk 'NR==2{print $4}')
+    FREE_SPACE=$(df -m $S4_LOOP_DEV_PATH | awk 'NR==2{print $4}')
     # add 20% to FREE_SPACE
     FREE_SPACE=$((FREE_SPACE + (FREE_SPACE / 5)))
     if [ $doubled -gt $FREE_SPACE ]; then
