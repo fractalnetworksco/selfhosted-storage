@@ -62,7 +62,7 @@ function create_subvolume() {
     btrfs_sudo subvolume create $1
 }
 
-function mkfs_btrfs() { 
+function mkfs_btrfs() {
     # create a btrfs filesystem
     if [[ $(id -u) -ne 0 ]]; then
         sudo mkfs.btrfs $1
@@ -71,9 +71,11 @@ function mkfs_btrfs() {
     fi
 }
 
-# if pwd is btrfs set BTRFS to true
-if is_btrfs .; then
-    export BTRFS=true
-else
-    export BTRFS=false
-fi
+function is_btrfs(){
+    # if pwd is btrfs set BTRFS to true
+    if is_btrfs "$1"; then
+        export BTRFS=true
+    else
+        export BTRFS=false
+    fi
+}
