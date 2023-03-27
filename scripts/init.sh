@@ -32,16 +32,6 @@ while [[ $# -gt 0 ]]; do
             shift # past argument
             shift # past value
             ;;
-        --private-key)
-            PRIV_KEY="$2"
-            shift # past argument
-            shift # past value
-            ;;
-        --public-key)
-            PUB_KEY="$2"
-            shift # past argument
-            shift # past value
-            ;;
         *)    # unknown option
             shift # past argument
             ;;
@@ -50,36 +40,40 @@ done
 
 if [ -n "$REMOTE" ]; then
     # ensure BTRFS variable is set to true
+    echo "Got remote: $REMOTE"
+
     if [ "$BTRFS" != true ]; then
         echo "Failed to init S4 volume: Directory must be BTRFS."
         exit 1
     fi
 
-    # exit if either a private key or public key is provided but not both
-    if [[ -n "$PRIV_KEY" && -z "$PUB_KEY" ]]; then
-        echo "Error: A private key was provided but not a public key. Please provide both or neither."
-        exit 1
-    elif [[ -z "$PRIV_KEY" && -n "$PUB_KEY" ]]; then
-        echo "Error: A public key was provided but not a private key. Please provide both or neither."
-        exit 1
-    fi
+    # check if read and write private keys were given through environment
+    check_if_keys_set_in_env
+
+    # if [[ -n "$WRITE_PRIV_KEY" && -z "$WRITE_PUB_KEY" ]]; then
+    #     echo "Error: A private key was provided but not a public key. Please provide both or neither."
+    #     exit 1
+    # elif [[ -z "$WRITE_PRIV_KEY" && -n "$WRITE_PUB_KEY" ]]; then
+    #     echo "Error: A public key was provided but not a private key. Please provide both or neither."
+    #     exit 1
+    # elif [[ -n "$READ_PRIV_KEY" && -z "$READ_PUB_KEY" ]]; then
+    #     echo "Error: A private key was provided but not a public key. Please provide both or neither."
+    #     exit 1
+    # elif [[ -z "$READ_PRIV_KEY" && -n "$READ_PUB_KEY" ]]; then
+    #     echo "Error: A public key was provided but not a private key. Please provide both or neither."
+    #     exit 1
+    # fi
 
     echo "Initializing volume: $VOL"
 
-    # create s4 volume that generates ssh keys if keys were not provided
-    if [[ -z "$PRIV_KEY" && -z "$PUB_KEY" ]]; then
-        init_volume "$REMOTE/$VOL"
-
-    # init volume with provided keys
-    else
-        init_volume "$REMOTE/$VOL" "$PRIV_KEY" "$PUB_KEY"
-    fi
+    # create s4 volume using either keys set in environment or generate new keys
+    init_volume "$REMOTE/$VOL"
 
     # dont attempt to register volume if mosaic flag is set
     if [ -z "$MOSAIC" ]; then
         # strip everything afte : from the remote
         SSH_REMOTE=$(echo $REMOTE | cut -d':' -f1)
-        PUB_KEY=$(<$(pwd)/.s4/id_ed25519-$VOL.pub)
+        PUB_KEY=$(<$(pwd)/.s4/write_id_ed25519-$VOL.pub)
 
         # s4admin uses sudo to run su_add_ssh_key which calls add_ssh_key as the borg user
         # replace ssh user borg with s4admin user

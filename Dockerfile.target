@@ -1,10 +1,14 @@
 FROM alpine
 
-# install openssh and borgbackup
-RUN apk add openssh-server borgbackup bash sudo
+# install openssh, borgbackup, btrfs-progs
+RUN apk add openssh-server borgbackup bash sudo btrfs-progs
 RUN ssh-keygen -A; adduser --disabled-password borg; adduser --disabled-password s4admin;
 RUN mkdir /home/borg/.ssh; chown borg:borg /home/borg/.ssh; chmod 700 /home/borg/.ssh;
 RUN mkdir /home/s4admin/.ssh; chown s4admin:s4admin /home/s4admin/.ssh; chmod 700 /home/s4admin/.ssh;
+
+# copy only script and its configuration
+COPY scripts/only.sh /usr/bin/local/only
+COPY scripts/.onlyrules /home/borg/.onlyrules
 
 COPY config/authorized_keys /home/borg/.ssh/authorized_keys
 COPY config/admin_authorized_keys /home/s4admin/.ssh/authorized_keys

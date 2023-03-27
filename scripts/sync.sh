@@ -7,21 +7,21 @@ source $SCRIPT_DIR/base.sh
 init_volume
 
 # read generation from $3
-if [ -f $GENERATION_FILE ]; then
-    # read the generation from the file
-    generation=$(cat $GENERATION_FILE)
-else
-    # write generation to file
-    write_generation $1 $GENERATION_FILE
-fi
+# if [ -f $GENERATION_FILE ]; then
+#     # read the generation from the file
+#     generation=$(cat $GENERATION_FILE)
+# else
+#     # write generation to file
+#     write_generation $1 $GENERATION_FILE
+# fi
 
-echo "Starting replication loop for $VOLUME to $REMOTE"
+echo "Starting sync loop for $VOLUME to $REMOTE"
 
 # store last positional argument as SUBVOLUME
 SUBVOLUME=$VOLUME_PATH
 
-# default interval to 1 second
-REPLICATION_INTERVAL=1
+# default interval to 10 seconds
+REPLICATION_INTERVAL=10
 while [[ $# -gt 0 ]]; do
     key="$1"
     case $key in
@@ -70,6 +70,7 @@ while true; do
         echo $(date) > $VOLUME_PATH/.s4/last_replicated
 
         # write out size of volume in bytes
+        pwd
         du -sm $VOLUME_PATH | cut -f1 > $VOLUME_PATH/.s4/volume_size
 
         sync

@@ -1,11 +1,10 @@
 #!/bin/bash
 
-# usage: clone <remote> [Options] <path (Defaults to .)>
+# usage: clone <remote> [Options]
 
 # Options:
-#   [--private-key <OpenSSH formatted Private Key>]
-#   [--public-key <OpenSSH formatted Public Key>]
 #   [--volume-name <Name of volume>]
+#   [--clone-path <Path to clone volume to>]
 
 REMOTE="$1"
 
@@ -13,16 +12,6 @@ REMOTE="$1"
 while [[ $# -gt 0 ]]; do
     key="$1"
     case $key in
-        --private-key)
-            PRIV_KEY="$2"
-            shift # past argument
-            shift # past value
-            ;;
-        --public-key)
-            PUB_KEY="$2"
-            shift # past argument
-            shift # past value
-            ;;
         --volume-name)
             VOLUME_NAME="$2"
             shift # past argument
@@ -61,20 +50,10 @@ if [ -n "$REMOTE" ]; then
         REMOTE_VOLUME=${REMOTE##*/}
     fi
 
-    # exit if both a private key and public key are not set
-    if [[ -z "$PRIV_KEY" && -z "$PUB_KEY" ]]; then
-        echo "Clone Error: A private key was provided but not a public key. Please provide both."
-        exit 1
-    elif [[ -z "$PRIV_KEY" && -n "$PUB_KEY" ]]; then
-        echo "Clone Error: A public key was provided but not a private key. Please provide both."
-        exit 1
-    elif [[ -n "$PRIV_KEY" && -z "$PUB_KEY" ]]; then
-        echo "Clone Error: Neither a private key nor public key provided. Both are required in order to clone from a remote."
-        exit 1
-    fi
+    check_if_keys_set_in_env
 
     # create .s4 directory which will also write provided keys into .s4
-    init_volume "$REMOTE" "$PRIV_KEY" "$PUB_KEY"
+    init_volume "$REMOTE"
 
 else
     # if no .s4 dir exists, exit
@@ -92,7 +71,7 @@ latest=$(get_latest_archive $REMOTE)
 # if not latest exit
 if [ -z "$latest" ]; then
     echo "No snapshots for $REMOTE_VOLUME archive found"
-    exit 1
+    exit 404
 fi
 
 # if REMOTE_VOLUME is set
