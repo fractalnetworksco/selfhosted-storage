@@ -40,13 +40,12 @@ S4_TMP_PATH="/tmp/s4-tmp-$VOLUME_NAME"
 # makes sure hidden files are moved as well
 cp -a $VOLUME_PATH $S4_TMP_PATH
 
-# sha256 the moved data. Make sure matches with original
-# sha256 original data at directory
+# sha1 the copied data. Make sure matches with original
 verify_copy $VOLUME_PATH $S4_TMP_PATH
 
 # exit if return code not 0
 if [ $? -ne 0 ]; then
-    echo "Error: sha256 of moved data does not match sha256 of original data"
+    echo "Error: fingerprint of moved data does not match sha1 of original data, data could be in use"
     rm -r $S4_TMP_PATH
     exit 1
 fi

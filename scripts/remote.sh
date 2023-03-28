@@ -5,6 +5,9 @@
 
 SCRIPT_DIR=$(dirname $(readlink -f $0))
 
+source $SCRIPT_DIR/base.sh
+check_is_s4
+
 # if not $1 print usage and exit
 if [ -z "$1" ]; then
     echo "usage: s4 remote <subcommand> <args>"

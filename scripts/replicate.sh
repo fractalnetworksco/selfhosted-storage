@@ -1,10 +1,13 @@
 #!/bin/bash
-set -u
 
 SCRIPT_DIR=$(dirname $(readlink -f $0))
 source $SCRIPT_DIR/base.sh
 
-init_volume
+check_is_s4
+
+# start ssh-agent with socket at /tmp/ssh-agent.sock
+eval `ssh-agent -a /tmp/ssh-agent.sock`
+VOLUME_PATH=$(pwd)
 
 # read generation from $3
 if [ -f $GENERATION_FILE ]; then
@@ -12,13 +15,15 @@ if [ -f $GENERATION_FILE ]; then
     generation=$(cat $GENERATION_FILE)
 else
     # write generation to file
-    write_generation $1 $GENERATION_FILE
+    write_generation "$VOLUME_PATH" $GENERATION_FILE
 fi
 
-echo "Starting replication loop for $VOLUME to $REMOTE"
+VOLUME_NAME=$(get_config $VOLUME_PATH/.s4/config volume name)
+#TODO optinally pass remote as --remote option
+DEFAULT_REMOTE="origin"
+REMOTE=$(get_config $VOLUME_PATH/.s4/config remotes $DEFAULT_REMOTE)
+echo "Starting replication loop for $VOLUME_NAME to $REMOTE"
 
-# store last positional argument as SUBVOLUME
-SUBVOLUME=$VOLUME_PATH
 
 # default interval to 1 second
 REPLICATION_INTERVAL=1
@@ -40,24 +45,22 @@ done
 prev_generation=0
 while true; do
 
-    generation=$(get_generation $SUBVOLUME)
+    generation=$(get_generation $VOLUME_PATH)
     # check if the generation has changed since the last snapshot
     if [ $generation -ne $prev_generation ]; then
         # create a read-only snapshot of the subvolume
         echo "Taking new snapshot of $(pwd)"
-        take_snapshot $SUBVOLUME $GENERATION_FILE $generation
+        take_snapshot $VOLUME_PATH $GENERATION_FILE $generation
 
         cd $VOLUME_PATH/.s4/snapshots/snapshot-$generation
         echo "In snapshot directory: $(pwd)"
 
         echo "Replicating snapshot to remote"
-        borg create --progress $REMOTE::$VOLUME-$generation .
+        borg create --progress $REMOTE::$VOLUME_NAME-$generation .
 
         # exit if last command not successful
         if [ $? -ne 0 ]; then
             echo "Failed to replicate borg snapshot"
-            cd $VOLUME_PATH
-            exit 1
         fi
 
         cd $VOLUME_PATH
@@ -74,7 +77,7 @@ while true; do
 
         sync
 
-        prev_generation=$(get_generation $SUBVOLUME)
+        prev_generation=$(get_generation $VOLUME_PATH)
     else
         echo "No new snapshot"
     fi

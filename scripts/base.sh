@@ -1,17 +1,21 @@
 #!/bin/bash
 
-set -x
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 source $SCRIPT_DIR/btrfs.sh
 source $SCRIPT_DIR/config.sh
 source $SCRIPT_DIR/loop_dev.sh
 source $SCRIPT_DIR/s4_volume.sh
-source $SCRIPT_DIR/sha256-compare.sh
+source $SCRIPT_DIR/sha1-compare.sh
+source $SCRIPT_DIR/operations.sh
 
 export S4_REMOTE_PORT=${S4_REMOTE_PORT:-2222}
 export S4_LOOP_DEV_PATH=${S4_LOOP_DEV_PATH:-/var/lib/fractal}
+export GENERATION_FILE=.s4/generation
 
+if [ -z "$BORG_RSH" ]; then
+    export BORG_RSH="ssh -p $S4_REMOTE_PORT -o BatchMode=yes -o StrictHostKeyChecking=accept-new"
+fi
 # ensure that volume directory exists
 mkdir -p $S4_LOOP_DEV_PATH
 
@@ -51,34 +55,10 @@ function set_owner_current_user() {
     chown_sudo $(id -u):$(id -g) $1
 }
 
-function push() {
-    SUBVOLUME=$1
-    prev_generation=$(cat $GENERATION_FILE)
-    generation=$(get_generation $SUBVOLUME)
-    # check if the generation has changed since the last snapshot
-    if [ $generation -ne $prev_generation ]; then
-        echo "Taking new snapshot"
-        echo $(pwd)
-        # create a read-only snapshot of the subvolume
-        take_snapshot $SUBVOLUME $GENERATION_FILE $generation
-        cd $VOLUME_PATH/snapshots/snapshot-$generation
-        borg create --progress $REMOTE::$VOLUME-$generation .
-        cd ../../
-        # exit if last command not successful
-        if [ $? -ne 0 ]; then
-            echo "Failed to replicate borg snapshot"
-            exit 1
-        fi
-        # cleanup old snapshots
-        cleanup_snapshots $VOLUME_PATH/snapshots
-        # write current_time to /s4/.s4/last_replicated
-        export TZ='America/Chicago'
-        echo $(date) > $VOLUME_PATH/.s4/last_replicated
-        # write out size of volume in bytes
-        du -sm $VOLUME_PATH/data | cut -f1 > $VOLUME_PATH/.s4/volume_size
-        sync
-        prev_generation=$(get_generation $SUBVOLUME)
-    else
-        echo "No changes since last push"
+function check_is_s4() {
+    # make sure .s4 exists in the current directory, else exit
+    if [ ! -d .s4 ]; then
+        echo "Error: "$PWD" is not a s4 volume"
+        exit 1
     fi
 }
