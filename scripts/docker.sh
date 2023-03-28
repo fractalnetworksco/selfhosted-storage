@@ -7,7 +7,7 @@ SCRIPT_DIR=$(dirname $(readlink -f $0))
 
 # if not $1 print usage and exit
 if [ -z "$1" ]; then
-    echo "usage: docker.sh <subcommand> <args>"
+    echo "usage: s4 docker <subcommand> <args>"
     exit 1
 fi
 # get the subcommand

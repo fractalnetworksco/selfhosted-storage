@@ -1,0 +1,3 @@
+crudini==0.9.4
+iniparse==0.5
+six==1.16.0
