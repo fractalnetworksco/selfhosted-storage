@@ -61,7 +61,16 @@ fi
 
 # prompt the user if they didn't specify the --yes flag
 if [ -z $YES ]; then
-  read -p "WARNING: Contents of $VOLUME_PATH will be copied into a new s4 volume at $VOLUME_PATH/s4, are you sure? [y/N] " -n 1 -r
+# bigger scary multiline ascii art warning message
+cat <<EOF
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+WARNING: This command will overwrite the contents of the loop device.
+         This will destroy any data on the loop device.
+         This command is intended for importing data from a backup.
+         If you are not sure what you are doing, please exit now.
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+EOF
+  read -p "Contents of $VOLUME_PATH will be copied into a new s4 volume at $VOLUME_PATH/s4, are you sure? [y/N] " -n 1 -r
   # continue if y
   if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo
