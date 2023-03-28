@@ -1,5 +1,5 @@
 #!/bin/bash
-set -ex
+set -e
 
 # usage:
 # s4 init <volume_name> --docker --path <path_to_init>
@@ -26,7 +26,7 @@ while true; do
       shift
       ;;
     -n|--name)
-      NAME=true
+      VOLUME_NAME="$2"
       shift
       ;;
     --)
@@ -44,16 +44,25 @@ done
 VOLUME_PATH="$1"
 
 if [ -z $VOLUME_PATH ]; then
-  VOLUME_PATH="."
+  echo "Setting volume path to current directory"
+  VOLUME_PATH=$PWD
+  VOLUME_NAME=$(basename "$PWD")
+fi
+if [ -z $VOLUME_NAME ]; then
+  VOLUME_NAME=$(basename "$VOLUME_PATH")
 fi
 
-# change to directory to init volume at
-cd $VOLUME_PATH
+read -p "WARNING: Contents of $VOLUME_PATH will be copied into a new s4 volume at $VOLUME_PATH/s4, are you sure? [y/N] " -n 1 -r
+# continue if y
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+  echo
+else
+  echo
+  exit 1
+fi
 
 # set BTRFS variable to true if volume is btrfs
 check_btrfs $VOLUME_PATH
-
-export VOLUME_NAME=$(basename $VOLUME_PATH)
 
 # Use the arguments in your script
 echo "Positional argument 1 (volume path): $VOLUME_PATH"
@@ -61,8 +70,12 @@ echo "Optional argument 1: $SIZE"
 echo "Optional argument 2: $DOCKER"
 echo "Optional argument 3: $VOLUME_NAME"
 
+LOOP_DEV=$(get_next_loop_device)
+
+# change to directory to init volume at
+cd $VOLUME_PATH
 # call s4 create to create loop device
-LOOP_DEV=$(s4 create "$S4_LOOP_DEV_PATH/$VOLUME_NAME" --size "$SIZE")
+s4 create "$S4_LOOP_DEV_PATH/$VOLUME_NAME" --size "$SIZE" --loop-device "$LOOP_DEV"
 
 if [ "$?" -ne 0 ]; then
   echo "Failed to create volume: $VOLUME_NAME"

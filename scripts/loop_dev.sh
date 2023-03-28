@@ -1,5 +1,4 @@
 #!/bin/bash
-set -x
 
 function losetup_sudo() {
     if [[ $(id -u) -ne 0 ]]; then
