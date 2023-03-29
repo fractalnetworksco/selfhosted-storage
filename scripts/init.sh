@@ -110,4 +110,4 @@ fi
 
 s4 import "$LOOP_DEV"
 
-write_config $VOLUME_PATH/.s4/config volume name $VOLUME_NAME
+set_config $VOLUME_PATH/.s4/config volume name $VOLUME_NAME
