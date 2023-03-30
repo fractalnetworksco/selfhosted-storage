@@ -30,11 +30,11 @@ while true; do
 done
 
 VOLUME_PATH=$(pwd)
-VOLUME_NAME=$(basename $VOLUME_PATH)
+TMP_FOLDER_NAME=$(basename $VOLUME_PATH)
 LOOP_DEV=${LOOP_DEV:-$1}
 
 # copy data to s4-tmp directory
-S4_TMP_PATH="/tmp/s4-tmp-$VOLUME_NAME"
+S4_TMP_PATH="/tmp/s4-tmp-$TMP_FOLDER_NAME"
 
 
 # makes sure hidden files are moved as well

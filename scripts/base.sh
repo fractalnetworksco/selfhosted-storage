@@ -12,6 +12,8 @@ source $SCRIPT_DIR/operations.sh
 export S4_REMOTE_PORT=${S4_REMOTE_PORT:-2222}
 export S4_LOOP_DEV_PATH=${S4_LOOP_DEV_PATH:-/var/lib/fractal}
 export GENERATION_FILE=.s4/generation
+export BORG_RELOCATED_REPO_ACCESS_IS_OK=yes
+export BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK=yes
 
 if [ -z "$BORG_RSH" ]; then
     export BORG_RSH="ssh -p $S4_REMOTE_PORT -o BatchMode=yes -o StrictHostKeyChecking=accept-new"
