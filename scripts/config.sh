@@ -9,6 +9,11 @@ if [[ $# -eq 3 || $# -eq 4 ]]; then
     exit 1
     fi
 else
+    # if $2 doesb't exist create it
+    if [[ ! -f "$2" && "$1" == "set" ]]; then
+        mkdir -p $(dirname "$2")
+        touch "$2"
+    fi
     file=$2
     section=$3
     key=$4
