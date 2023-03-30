@@ -2,7 +2,6 @@
 
 # wrapper script that calls s4 remote sub commands in the scripts folder
 # usage: s4 remote <subcommand> <args>
-
 SCRIPT_DIR=$(dirname $(readlink -f $0))
 
 source $SCRIPT_DIR/base.sh

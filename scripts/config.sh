@@ -1,10 +1,15 @@
 #!/bin/bash
-set -x
-
-file=$2
-section=$3
-key=$4
-value=$5
+if [[ $# -eq 3 || $# -eq 4 ]]; then
+    file=".s4/config"
+    section=$2
+    key=$3
+    value=$4
+else
+    file=$2
+    section=$3
+    key=$4
+    value=$5
+fi
 
 if [[ "$1" == "set" ]]; then
     if ! grep -q "^\[$section\]" "$file"; then
