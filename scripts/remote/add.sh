@@ -10,5 +10,9 @@ if [ $# -ne 2 ]; then
     exit 1
 fi
 
-s4 config set .s4/config remotes $1 $2
+s4 config set remotes $1 "$2"
 
+# if $1 is origin set it as the default remote
+if [ $1 = "origin" ]; then
+    s4 config set default remote origin
+fi

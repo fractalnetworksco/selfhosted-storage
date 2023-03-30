@@ -37,13 +37,7 @@ function get_generation() {
 
 function take_snapshot() {
     # create a read-only snapshot of the subvolume
-    btrfs_sudo subvolume snapshot -r $1 .s4/snapshots/snapshot-$3
-    write_generation $1 $2
-}
-
-function write_generation() {
-    # write the generation to a file
-    echo $(get_generation $1) > $2
+    btrfs_sudo subvolume snapshot -r $1 .s4/snapshots/snapshot-$2
 }
 
 function cleanup_snapshots() {

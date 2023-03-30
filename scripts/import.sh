@@ -62,6 +62,7 @@ chown_sudo -R $USER:$USER $VOLUME_PATH
 # copy copied data into mounted directory
 cp -a $S4_TMP_PATH/. $VOLUME_PATH
 
+
 # create .s4 directory
 mkdir -p $VOLUME_PATH/.s4/snapshots
 

@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 source $SCRIPT_DIR/btrfs.sh
 source $SCRIPT_DIR/loop_dev.sh
@@ -10,7 +9,6 @@ source $SCRIPT_DIR/operations.sh
 
 export S4_REMOTE_PORT=${S4_REMOTE_PORT:-2222}
 export S4_LOOP_DEV_PATH=${S4_LOOP_DEV_PATH:-/var/lib/fractal}
-export GENERATION_FILE=.s4/generation
 export BORG_RELOCATED_REPO_ACCESS_IS_OK=yes
 export BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK=yes
 
@@ -61,5 +59,14 @@ function check_is_s4() {
     if [ ! -d .s4 ]; then
         echo "Error: "$PWD" is not a s4 volume"
         exit 1
+    fi
+}
+
+function generate_uuid() {
+    # use uuidgen if it exists in path else use uuid -v4
+    if command -v uuidgen &> /dev/null; then
+        uuidgen
+    else
+        uuid -v4
     fi
 }

@@ -70,11 +70,10 @@ while true; do
 
         # write current_time to /s4/.s4/last_replicated
         export TZ='America/Chicago'
-        echo $(date) > $VOLUME_PATH/.s4/last_replicated
+        s4 config set volume last_replicated "$(echo $(date))"
 
         # write out size of volume in bytes
-        du -sm $VOLUME_PATH | cut -f1 > $VOLUME_PATH/.s4/volume_size
-
+        s4 config set volume size "$(du -sm $VOLUME_PATH | cut -f1)"
         sync
 
         prev_generation=$(get_generation $VOLUME_PATH)
