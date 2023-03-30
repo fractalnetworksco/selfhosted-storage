@@ -109,5 +109,6 @@ if [ "$DOCKER" = true ]; then
 fi
 
 s4 import "$LOOP_DEV"
+cd $VOLUME_PATH
 s4 config set volume name $VOLUME_NAME
 s4 config set ~/.s4/volumes/$VOLUME_NAME state generation -1
