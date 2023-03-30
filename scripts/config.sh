@@ -4,6 +4,10 @@ if [[ $# -eq 3 || $# -eq 4 ]]; then
     section=$2
     key=$3
     value=$4
+    if [ ! -d .s4 ]; then
+        echo "Error: "$PWD" is not a s4 volume"
+    exit 1
+    fi
 else
     file=$2
     section=$3
