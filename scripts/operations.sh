@@ -25,6 +25,7 @@ function is_initialized() {
 }
 
 function push() {
+    source $SCRIPT_DIR/base.sh
     local REMOTE_NAME=$1
     local REMOTE
     # if $1 not set use default remote
@@ -40,11 +41,15 @@ function push() {
         exit 1
     fi
     is_initialized $REMOTE_NAME
-    source $SCRIPT_DIR/base.sh
     local VOLUME_PATH=$(pwd)
     local VOLUME_NAME=$(s4 config get volume name)
     local SNAPSHOT_UUID=$(generate_uuid)
-    local prev_generation=$(s4 config get ~/.s4/volumes/$VOLUME_NAME state generation)
+    local prev_generation
+    prev_generation=$(s4 config get ~/.s4/volumes/$VOLUME_NAME state generation)
+    # if return code is not 0, exit
+    if [ "$?" -ne 0 ]; then
+        prev_generation=-1
+    fi
     local generation=$(get_generation $VOLUME_PATH)
     # check if the generation has changed since the last snapshot
     # if VERBOSE is set, print the generation numbers

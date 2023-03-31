@@ -13,7 +13,7 @@ source $SCRIPT_DIR/../base.sh
 
 check_is_s4
 
-VOLUME_NAME=$(get_config .s4/config volume name)
+VOLUME_NAME=$(s4 config get volume name)
 
 # if last argument is stop then stop the container
 if [ "${@: -1}" == "stop" ]; then
@@ -21,7 +21,8 @@ if [ "${@: -1}" == "stop" ]; then
     exit 0
 else
     # read contents of file referenced $1 to variable
-    S4_PRIV_KEY=$(cat $1)
+    PRIV_KEY_PATH=$1
+    S4_PRIV_KEY=$(cat $PRIV_KEY_PATH)
 fi
 
 

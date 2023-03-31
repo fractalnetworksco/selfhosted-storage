@@ -24,4 +24,5 @@ while true; do
   esac
 done
 
-push "$1"
+REMOTE_NAME=$1
+push "$REMOTE_NAME"
