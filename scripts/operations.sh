@@ -59,26 +59,30 @@ function push() {
         echo "Current generation: $generation"
     fi
     if [ $generation -ne $prev_generation ]; then
-        echo "Taking new snapshot"
+        # update volume metadata before replicating
+        if [ -z "$TZ" ]; then
+            export TZ='America/Chicago'
+        fi
         s4 config set volume last_replicated "$(date)"
         s4 config set volume size "$(du -sm $VOLUME_PATH | cut -f1)"
-        # create a read-only snapshot of the subvolume
+        # need to read volume config after writing to ensure the above writes are synced during this push operation
+        # without this, pending writes are not flushed which causes continuous empty replication
+        cat $VOLUME_PATH/.s4/config > /dev/null
+        echo "Taking new snapshot"
         take_snapshot $VOLUME_PATH $SNAPSHOT_UUID
         cd $VOLUME_PATH/.s4/snapshots/snapshot-$SNAPSHOT_UUID
-        borg create --progress $REMOTE::$SNAPSHOT_UUID .
         cd $VOLUME_PATH
-        # exit if last command not successful
+        borg create --progress $REMOTE::$SNAPSHOT_UUID .
+        # exit if replication failed
         if [ $? -ne 0 ]; then
             echo "Failed to replicate borg snapshot"
             exit 1
         fi
-        # cleanup old snapshots
+        # cleanup snapshots
         cleanup_snapshots $VOLUME_PATH/.s4/snapshots
-        # write last replicated time to volume config
-        if [ -z "$TZ" ]; then
-            export TZ='America/Chicago'
-        fi
+        # sync again to account for snapshots and cleanup
         sync
+        # store the current generation in the volume config so we can detect changes going forward
         s4 config set ~/.s4/volumes/$VOLUME_NAME state generation $(get_generation $VOLUME_PATH)
     else
         echo "No changes since last push"

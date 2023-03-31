@@ -26,6 +26,8 @@ if [[ "$1" == "set" ]]; then
     value=$(sed -E 's/([\/&])/\\\1/g' <<< "$value")
     if ! grep -q "^\[$section\]" "$file"; then
         echo "[$section]" >> "$file"
+        # need these syncs here so btrfs generatiob counter updates
+        sync
     fi
     if grep -q "^\[$section\]" "$file"; then
         if grep -qE "^\s*$key\s*=" "$file"; then
@@ -33,6 +35,8 @@ if [[ "$1" == "set" ]]; then
         else
             sed -i "/^\[$section\]/a $key=${value}" "$file"
         fi
+        # need these syncs here so btrfs generatiob counter updates
+        sync
     fi
 elif [[ "$1" == "get" ]]; then
     # number of arguments is 3 set file to .s4/config
