@@ -65,6 +65,7 @@ function push() {
         fi
         s4 config set volume last_replicated "$(date)"
         s4 config set volume size "$(du -sm $VOLUME_PATH | cut -f1)"
+        s4 config set volume last_snapshot $SNAPSHOT_UUID
         # need to read volume config after writing to ensure the above writes are synced during this push operation
         # without this, pending writes are not flushed which causes continuous empty replication
         cat $VOLUME_PATH/.s4/config > /dev/null
@@ -89,12 +90,37 @@ function push() {
     fi
 }
 
-
 function pull () {
     source $SCRIPT_DIR/base.sh
     check_is_s4
     REMOTE_NAME=$1
+    # if $REMOTE_NAME empty, use default remote
+    if [ -z "$REMOTE_NAME" ]; then
+        REMOTE_NAME=$(s4 config get default remote)
+    fi
+    echo "Checking with remote \"$REMOTE_NAME\" for new snapshots..."
+    NEW_SNAPSHOT=$(new_snapshot_exists $REMOTE_NAME)
+    # exit if return code not equal 0
+    if [ "$?" -ne 0 ]; then
+        echo "Volume is up to date"
+        exit 1
+    fi
     REMOTE=$(get_remote $REMOTE_NAME)
-    borg --bypass-lock extract --progress $REMOTE::$(get_latest_archive $REMOTE)
+    borg --bypass-lock extract --progress $REMOTE::$NEW_SNAPSHOT
+
+}
+
+function new_snapshot_exists() {
+    source $SCRIPT_DIR/base.sh
+    REMOTE_NAME=$1
+    REMOTE=$(get_remote $REMOTE_NAME)
+    CURRENT_SNAPSHOT=$(s4 config get volume last_snapshot)
+    LATEST_SNAPSHOT=$(get_latest_archive $REMOTE)
+    # if CURRENT_SNAPSHOT not equal LATEST_SNAPSHOT, return 0
+    if [ "$CURRENT_SNAPSHOT" != "$LATEST_SNAPSHOT" ]; then
+        echo $LATEST_SNAPSHOT
+    else
+        return 1
+    fi
 
 }
