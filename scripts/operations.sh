@@ -88,3 +88,13 @@ function push() {
         echo "No changes since last push"
     fi
 }
+
+
+function pull () {
+    source $SCRIPT_DIR/base.sh
+    check_is_s4
+    REMOTE_NAME=$1
+    REMOTE=$(get_remote $REMOTE_NAME)
+    borg --bypass-lock extract --progress $REMOTE::$(get_latest_archive $REMOTE)
+
+}

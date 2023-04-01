@@ -1,6 +1,7 @@
 #!/bin/bash
 function get_latest_archive() {
-    borg list --short --last 1 $1
+    REPO=$1
+    borg list --short --last 1 $REPO
 }
 
 

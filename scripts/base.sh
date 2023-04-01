@@ -71,3 +71,11 @@ function generate_uuid() {
         uuid -v4
     fi
 }
+
+function get_remote() {
+    local REMOTE_NAME=$1
+    if [ -z "$REMOTE_NAME" ]; then
+        REMOTE_NAME=$(s4 config get default remote)
+    fi
+    echo $(s4 config get remotes $REMOTE_NAME)
+}
