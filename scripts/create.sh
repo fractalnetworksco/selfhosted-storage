@@ -52,6 +52,8 @@ fi
 # create loop device
 create_loop_device $LOOP_DEV $LOOP_DEV_FILE
 
+s4 config set volume loop_file $LOOP_DEV_FILE
+
 # format loop device btrfs
 mkfs_btrfs $LOOP_DEV
 

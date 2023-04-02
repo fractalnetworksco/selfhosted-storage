@@ -37,7 +37,7 @@ function push() {
     fi
     # if $REMOTE is empty exit
     if [ "$?" -ne 0 ]; then
-        echo "Remote $1 is not configured for $(s4 config get volume name)"
+        echo "No remote configured for volume $(s4 config get volume name)"
         exit 1
     fi
     is_initialized $REMOTE_NAME
@@ -111,6 +111,7 @@ function pull () {
 }
 
 function new_snapshot_exists() {
+    # check remote for new snapshots return snapshot uuid if new snapshot exists
     source $SCRIPT_DIR/base.sh
     REMOTE_NAME=$1
     REMOTE=$(get_remote $REMOTE_NAME)
@@ -123,4 +124,27 @@ function new_snapshot_exists() {
         return 1
     fi
 
+}
+
+function resize() {
+    source $SCRIPT_DIR/base.sh
+    check_is_s4
+    LOOP_DEV_FILE=$1
+    NEW_SIZE=$2 # ie 2G
+    LOOP_DEV=$(losetup_sudo -j $LOOP_DEV_FILE| awk -F: '{print $1}')
+    VOLUME_PATH=$(pwd)
+    truncate -s $NEW_SIZE $LOOP_DEV_FILE
+    losetup_sudo --set-capacity $LOOP_DEV
+    btrfs_sudo filesystem resize max $VOLUME_PATH
+}
+
+function mount() {
+    source $SCRIPT_DIR/base.sh
+    REMOTE_NAME=$1
+    REMOTE=$(get_remote $REMOTE_NAME)
+    check_is_s4
+    mkdir -p .s4/mnt
+    LATEST_SNAPSHOT=$(get_latest_archive $REMOTE)
+    borg --bypass-lock mount $REMOTE::$LATEST_SNAPSHOT .s4/mnt
+    echo "Mounted latest archive for volume $REMOTE::$LATEST_SNAPSHOT to .s4/mnt"
 }

@@ -51,6 +51,15 @@ function mkdir_sudo(){
     fi
 }
 
+
+function truncate_sudo() {
+    if [[ $(id -u) -ne 0 ]]; then
+        sudo truncate $@
+    else
+        truncate $@
+    fi
+}
+
 function set_owner_current_user() {
     chown_sudo $(id -u):$(id -g) $1
 }
