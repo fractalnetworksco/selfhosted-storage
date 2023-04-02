@@ -142,9 +142,10 @@ function mount() {
     source $SCRIPT_DIR/base.sh
     REMOTE_NAME=$1
     REMOTE=$(get_remote $REMOTE_NAME)
+    MOUNT_POINT=$2
     check_is_s4
     mkdir -p .s4/mnt
     LATEST_SNAPSHOT=$(get_latest_archive $REMOTE)
-    borg --bypass-lock mount $REMOTE::$LATEST_SNAPSHOT .s4/mnt
+    borg --bypass-lock mount $REMOTE::$LATEST_SNAPSHOT $MOUNT_POINT
     echo "Mounted latest archive for volume $REMOTE::$LATEST_SNAPSHOT to .s4/mnt"
 }
