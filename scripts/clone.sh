@@ -45,11 +45,6 @@ fi
 # change into directory to clone into
 cd $CLONE_PATH
 
-echo "Remote: $REMOTE"
-echo "Path: $CLONE_PATH"
-echo "Volume name: $VOLUME_NAME"
-echo "Docker: $DOCKER"
-
 # get the lastest archive from provided remote
 LATEST=$(get_latest_archive $REMOTE)
 if [ -z "$LATEST" ]; then
@@ -65,7 +60,6 @@ borg extract $REMOTE::$LATEST .s4/config
 
 # get volume size from config
 VOLUME_SIZE=$(s4 config get volume size)
-echo "Debug: Got volume size: $VOLUME_SIZE"
 
 # create loop device that is double the size of VOLUME_SIZE
 LOOP_DEV=$(get_next_loop_device)
