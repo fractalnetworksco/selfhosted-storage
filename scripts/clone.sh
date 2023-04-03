@@ -38,6 +38,8 @@ if [ -z "$REMOTE" ]; then
     exit 1
 elif [ -z "$CLONE_PATH" ]; then
     CLONE_PATH=$(pwd)
+elif [ -z "$VOLUME_NAME" ]; then
+    VOLUME_NAME=$(basename $(pwd))
 fi
 
 # change into directory to clone into
