@@ -72,8 +72,8 @@ function push() {
         echo "Taking new snapshot"
         take_snapshot $VOLUME_PATH $SNAPSHOT_UUID
         cd $VOLUME_PATH/.s4/snapshots/snapshot-$SNAPSHOT_UUID
-        cd $VOLUME_PATH
         borg create --progress $REMOTE::$SNAPSHOT_UUID .
+        cd $VOLUME_PATH
         # exit if replication failed
         if [ $? -ne 0 ]; then
             echo "Failed to replicate borg snapshot"
@@ -106,8 +106,13 @@ function pull () {
         exit 1
     fi
     REMOTE=$(get_remote $REMOTE_NAME)
-    borg --bypass-lock extract --progress $REMOTE::$NEW_SNAPSHOT
-
+    TMP_MOUNT="/tmp/s4/$NEW_SNAPSHOT/"
+    mkdir -p $TMP_MOUNT
+    s4 mount $REMOTE_NAME $TMP_MOUNT
+    rsync -avzh --delete $TMP_MOUNT $(pwd)
+    #borg --bypass-lock extract --progress $REMOTE::$NEW_SNAPSHOT
+    umount $TMP_MOUNT
+    echo "Latest changes synced from remote \"$REMOTE_NAME\""
 }
 
 function new_snapshot_exists() {
