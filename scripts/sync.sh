@@ -11,5 +11,5 @@ while true; do
     fi
     echo "Pulling from $REMOTE_NAME"
     pull "$REMOTE_NAME"
-    sleep 15
+    sleep 1
 done

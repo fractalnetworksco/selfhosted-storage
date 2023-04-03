@@ -1,7 +1,7 @@
 #!/bin/bash
 function get_latest_archive() {
     REPO=$1
-    borg list --short --last 1 $REPO
+    borg --bypass-lock list --short --last 1 $REPO
 }
 
 

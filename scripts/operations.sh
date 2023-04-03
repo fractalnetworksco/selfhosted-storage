@@ -103,16 +103,24 @@ function pull () {
     # exit if return code not equal 0
     if [ "$?" -ne 0 ]; then
         echo "Volume is up to date"
-    else
-        REMOTE=$(get_remote $REMOTE_NAME)
-        TMP_MOUNT="/tmp/s4/$NEW_SNAPSHOT/"
-        mkdir -p $TMP_MOUNT
-        s4 mount $REMOTE_NAME $TMP_MOUNT
-        rsync -avzh --delete $TMP_MOUNT $(pwd)
-        #borg --bypass-lock extract --progress $REMOTE::$NEW_SNAPSHOT
-        umount $TMP_MOUNT
-        echo "Latest changes synced from remote \"$REMOTE_NAME\""
+        return 1
     fi
+    # assert that NEW_SNAPSHOT is a uuidv4
+    # make me a function
+    if ! [[ $NEW_SNAPSHOT =~ ^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$ ]]; then
+        echo "new_snapshot_exists returned invalid uuid: $NEW_SNAPSHOT"
+        return 1
+    fi
+    REMOTE=$(get_remote $REMOTE_NAME)
+    TMP_MOUNT="/tmp/s4/$NEW_SNAPSHOT/"
+    mkdir -p $TMP_MOUNT
+    echo "New changes found, syncing from remote \"$REMOTE_NAME\""
+    s4 mount $REMOTE_NAME $TMP_MOUNT
+    # sync mounted volume with local volume
+    rsync -avzh --delete $TMP_MOUNT $(pwd)
+    #borg --bypass-lock extract --progress $REMOTE::$NEW_SNAPSHOT
+    umount $TMP_MOUNT
+    echo "Latest changes synced from remote \"$REMOTE_NAME\""
 }
 
 function new_snapshot_exists() {
