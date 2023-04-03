@@ -5,9 +5,9 @@ s4 is a simple, secure and reliable personal storage solution with zero-configur
 
 s4 also includes optional first-class support for real-time docker volume replication to enable Fractal Network [application portability](https://blog.fractalnetworks.co/portable-self-hosted-applications-2/).
 
-## Pre-requisites
+## Pre-requisites (Debian / Ubuntu)
 ```
-sudo apt install btrfs-progs uuid
+sudo apt install btrfs-progs uuid borgbackup
 ```
 
 ## Quick Start
