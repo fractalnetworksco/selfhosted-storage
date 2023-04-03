@@ -73,12 +73,12 @@ function push() {
         take_snapshot $VOLUME_PATH $SNAPSHOT_UUID
         cd $VOLUME_PATH/.s4/snapshots/snapshot-$SNAPSHOT_UUID
         borg create --progress $REMOTE::$SNAPSHOT_UUID .
-        cd $VOLUME_PATH
         # exit if replication failed
         if [ $? -ne 0 ]; then
             echo "Failed to replicate borg snapshot"
             exit 1
         fi
+        cd $VOLUME_PATH
         # cleanup snapshots
         cleanup_snapshots $VOLUME_PATH/.s4/snapshots
         # sync again to account for snapshots and cleanup
