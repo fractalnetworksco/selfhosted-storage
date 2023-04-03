@@ -103,16 +103,16 @@ function pull () {
     # exit if return code not equal 0
     if [ "$?" -ne 0 ]; then
         echo "Volume is up to date"
-        exit 1
+    else
+        REMOTE=$(get_remote $REMOTE_NAME)
+        TMP_MOUNT="/tmp/s4/$NEW_SNAPSHOT/"
+        mkdir -p $TMP_MOUNT
+        s4 mount $REMOTE_NAME $TMP_MOUNT
+        rsync -avzh --delete $TMP_MOUNT $(pwd)
+        #borg --bypass-lock extract --progress $REMOTE::$NEW_SNAPSHOT
+        umount $TMP_MOUNT
+        echo "Latest changes synced from remote \"$REMOTE_NAME\""
     fi
-    REMOTE=$(get_remote $REMOTE_NAME)
-    TMP_MOUNT="/tmp/s4/$NEW_SNAPSHOT/"
-    mkdir -p $TMP_MOUNT
-    s4 mount $REMOTE_NAME $TMP_MOUNT
-    rsync -avzh --delete $TMP_MOUNT $(pwd)
-    #borg --bypass-lock extract --progress $REMOTE::$NEW_SNAPSHOT
-    umount $TMP_MOUNT
-    echo "Latest changes synced from remote \"$REMOTE_NAME\""
 }
 
 function new_snapshot_exists() {
@@ -149,8 +149,7 @@ function mount() {
     REMOTE=$(get_remote $REMOTE_NAME)
     MOUNT_POINT=$2
     check_is_s4
-    mkdir -p .s4/mnt
     LATEST_SNAPSHOT=$(get_latest_archive $REMOTE)
     borg --bypass-lock mount $REMOTE::$LATEST_SNAPSHOT $MOUNT_POINT
-    echo "Mounted latest archive for volume $REMOTE::$LATEST_SNAPSHOT to .s4/mnt"
+    echo "Mounted latest archive for volume $REMOTE::$LATEST_SNAPSHOT to $MOUNT_POINT"
 }
