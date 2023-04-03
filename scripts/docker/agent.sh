@@ -27,8 +27,7 @@ fi
 
 # if action is sync give the container access to fuse
 if [ "$ACTION" == "sync" ]; then
-    # start ssh-agent with socket at /tmp/ssh-agent.sock
-    FUSE_DEVICE="--device /dev/fuse"
+    FUSE_DEVICE="--device /dev/fuse --security-opt apparmor:unconfined"
 fi
 
 container_id=$(docker run $FUSE_DEVICE --cap-add SYS_ADMIN --restart always --name s4-agent-$VOLUME_NAME -v $(pwd):/s4 -d s4-agent:latest $ACTION)
