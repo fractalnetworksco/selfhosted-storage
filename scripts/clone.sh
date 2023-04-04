@@ -31,35 +31,28 @@ while true; do
 done
 
 REMOTE="$1"
-CLONE_PATH="$2"
 
 if [ -z "$REMOTE" ]; then
-    echo "Usage: s4 clone <remote> [--name <volume_name>] [--docker] [<clone_path>]"
+    echo "Usage: s4 clone <remote> [--name <volume_name>] [--docker]"
     exit 1
-elif [ -z "$CLONE_PATH" ]; then
-    CLONE_PATH=$(pwd)
 elif [ -z "$VOLUME_NAME" ]; then
     VOLUME_NAME=$(basename $(pwd))
 fi
 
-# change into directory to clone into
-cd $CLONE_PATH
+CLONE_PATH="./$VOLUME_NAME"
 
-# get the lastest archive from provided remote
+# create a directory in the current directory with the volume name
+mkdir -p $CLONE_PATH
+
+# try to get the lastest archive from provided remote
 LATEST=$(get_latest_archive $REMOTE)
 if [ -z "$LATEST" ]; then
     echo "No snapshots for $REMOTE archive found"
     exit 1
 fi
 
-# ensure .s4 directory exists
-mkdir -p $CLONE_PATH/.s4
-
-# extract s4 config file from remote in order to get volume size
-borg extract $REMOTE::$LATEST .s4/config
-
-# get volume size from config
-VOLUME_SIZE=$(s4 config get volume size)
+# get volume's `size` from config file on the remote
+VOLUME_SIZE=$(borg --bypass-lock extract --stdout $REMOTE::$LATEST .s4/config | grep "^size=" | cut -d "=" -f 2)
 
 # create loop device that is double the size of VOLUME_SIZE
 LOOP_DEV=$(get_next_loop_device)
@@ -72,34 +65,32 @@ fi
 
 # create docker volume if --docker flag is set
 if [ "$DOCKER" = true ]; then
-  s4 docker create $LOOP_DEV "$VOLUME_NAME"
+  s4 docker create "$LOOP_DEV" "$VOLUME_NAME"
 fi
 
 # mount loop device at clone path
 echo "Mounting $LOOP_DEV at $CLONE_PATH"
-mount_sudo $LOOP_DEV $CLONE_PATH
+mount_sudo "$LOOP_DEV" "$CLONE_PATH"
 
 # ensure user owns the files
-chown_sudo -R $USER:$USER $CLONE_PATH
+chown_sudo -R "$USER":"$USER" "$CLONE_PATH"
 
 # reenter after mount
-cd $CLONE_PATH
+cd "$CLONE_PATH"
 
-mkdir -p $CLONE_PATH/.s4
+# create .s4 directory after mount
+mkdir -p "$CLONE_PATH/.s4"
 
-# extract s4 config file from remote in order to get volume size
-borg extract $REMOTE::$LATEST .s4/config
+# extract s4 config file in order for `s4 pull` to work
+borg --bypass-lock extract "$REMOTE::$LATEST" .s4/config
 
-# unset latest snapshot (for now)
+# unset latest snapshot (for now) so that `s4 pull` will pull in latest snapshot
 s4 config set volume last_snapshot ""
 
-# pull in latest changes from remote
+# pull in latest snapshot from remote
 s4 pull
 
 if [ "$?" -ne 0 ]; then
   echo "Failed to pull latest changes for volume: $VOLUME_NAME"
   exit 1
 fi
-
-echo "Successfully pulled latest changes for volume: $VOLUME_NAME. You will need to re-enter this directory \`cd $CLONE_PATH\` to continue."
-
