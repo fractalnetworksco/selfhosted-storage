@@ -1,3 +1,10 @@
-#!/bin/ash
+#!/bin/bash
 
-python3 /code/s4.py -D -e
+# start ssh-agent with socket at /tmp/ssh-agent.sock
+eval `ssh-agent -a /tmp/ssh-agent.sock`
+
+# attempt to load S4_PRIV_KEY into ssh-agent
+loadkey
+
+# run whatever command was given to the container
+"$@"
