@@ -16,7 +16,7 @@ while true; do
   case "$1" in
     -n|--no-preserve)
       NO_PRESERVE=true
-      shift 2
+      shift
       ;;
     --)
       shift
@@ -57,7 +57,11 @@ mkdir -p $VOLUME_PATH
 mount_sudo $LOOP_DEV $VOLUME_PATH
 
 # ensure current user owns the mounted directory
-chown_sudo -R $USER:$USER $VOLUME_PATH
+
+# if not root, chown to current user
+if [ "$EUID" -ne 0 ]; then
+  chown_sudo -R $USER:$USER $VOLUME_PATH
+fi
 
 # copy copied data into mounted directory
 cp -a $S4_TMP_PATH/. $VOLUME_PATH

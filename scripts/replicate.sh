@@ -6,7 +6,7 @@ source $SCRIPT_DIR/base.sh
 check_is_s4
 
 # start ssh-agent with socket at /tmp/ssh-agent.sock
-eval `ssh-agent -a /tmp/ssh-agent.sock`
+# eval `ssh-agent -a /tmp/ssh-agent.sock`
 
 REMOTE_NAME=$1
 # if remote name is not set, use default remote

@@ -13,7 +13,7 @@ source $SCRIPT_DIR/base.sh
 DOCKER=false
 
 # parse optional arguments using getopts with long options
-OPTS=`getopt -o s:d:n:y --long size:,name:,docker:,yes -- "$@"`
+OPTS=`getopt -o s:d:n:y --long size:,name:,docker,yes -- "$@"`
 eval set -- "$OPTS"
 while true; do
   case "$1" in
@@ -27,7 +27,7 @@ while true; do
       ;;
     -n|--name)
       VOLUME_NAME="$2"
-      shift
+      shift 2
       ;;
     -y|--yes)
       YES=true
@@ -50,8 +50,7 @@ VOLUME_PATH="$1"
 # if volume path is not set, default to current directory
 if [ -z $VOLUME_PATH ]; then
   echo "Setting volume path to current directory"
-  VOLUME_PATH=$PWD
-  VOLUME_NAME=$(basename "$PWD")
+  VOLUME_PATH=$(pwd)
 fi
 
 # if volume name is not set, default to basename of volume path
@@ -108,7 +107,12 @@ if [ "$DOCKER" = true ]; then
   s4 docker create $LOOP_DEV "$VOLUME_NAME"
 fi
 
-s4 import "$LOOP_DEV"
+if [ -z "$YES" ]; then
+  s4 import "$LOOP_DEV"
+else
+  s4 import "$LOOP_DEV" --no-preserve
+fi
+
 cd $VOLUME_PATH
 s4 config set volume name $VOLUME_NAME
 s4 config set ~/.s4/volumes/$VOLUME_NAME state generation -1

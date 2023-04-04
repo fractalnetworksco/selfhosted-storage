@@ -4,7 +4,7 @@
 eval `ssh-agent -a /tmp/ssh-agent.sock`
 
 # attempt to load S4_PRIV_KEY into ssh-agent
-loadkey
+s4 loadkey
 
 # run whatever command was given to the container
-"$@"
+bash -c "$@"
