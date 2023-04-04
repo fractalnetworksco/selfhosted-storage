@@ -78,11 +78,14 @@ fi
 # ensure user owns the files
 chown_sudo -R "$USER":"$USER" "$CLONE_PATH"
 
+# ensure .s4 directory exists inside volume
+mkdir -p "$CLONE_PATH/.s4"
+
+# move created .s4 directory into volume
+mv "$(pwd)/.s4" "$CLONE_PATH/.s4"
+
 # enter after mount
 cd "$CLONE_PATH"
-
-# create .s4 directory after mount
-mkdir -p "$CLONE_PATH/.s4"
 
 # extract s4 config file from remote in order for `s4 pull` to work
 borg --bypass-lock extract "$REMOTE::$LATEST" .s4/config
