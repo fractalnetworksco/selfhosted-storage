@@ -39,7 +39,7 @@ elif [ -z "$VOLUME_NAME" ]; then
     VOLUME_NAME=$(basename $(pwd))
 fi
 
-CLONE_PATH="./$VOLUME_NAME"
+CLONE_PATH="$(pwd)/$VOLUME_NAME"
 
 # create a directory in the current directory with the volume name
 mkdir -p $CLONE_PATH
@@ -57,7 +57,6 @@ VOLUME_SIZE=$(borg --bypass-lock extract --stdout $REMOTE::$LATEST .s4/config | 
 # create loop device that is double the size of VOLUME_SIZE
 LOOP_DEV=$(get_next_loop_device)
 s4 create "$S4_LOOP_DEV_PATH/$VOLUME_NAME" --size "$VOLUME_SIZE" --loop-device "$LOOP_DEV"
-
 if [ "$?" -ne 0 ]; then
   echo "Failed to create volume: $VOLUME_NAME"
   exit 1
@@ -71,25 +70,32 @@ fi
 # mount loop device at clone path
 echo "Mounting $LOOP_DEV at $CLONE_PATH"
 mount_sudo "$LOOP_DEV" "$CLONE_PATH"
+if [ "$?" -ne 0 ]; then
+  echo "Failed to mount volume: $VOLUME_NAME"
+  exit 1
+fi
 
 # ensure user owns the files
 chown_sudo -R "$USER":"$USER" "$CLONE_PATH"
 
-# reenter after mount
+# enter after mount
 cd "$CLONE_PATH"
 
 # create .s4 directory after mount
 mkdir -p "$CLONE_PATH/.s4"
 
-# extract s4 config file in order for `s4 pull` to work
+# extract s4 config file from remote in order for `s4 pull` to work
 borg --bypass-lock extract "$REMOTE::$LATEST" .s4/config
+if [ "$?" -ne 0 ]; then
+  echo "Failed to extract s4 config from remote $REMOTE::$LATEST"
+  exit 1
+fi
 
-# unset latest snapshot (for now) so that `s4 pull` will pull in latest snapshot
+# unset latest snapshot so that `s4 pull` will pull in latest snapshot
 s4 config set volume last_snapshot ""
 
 # pull in latest snapshot from remote
 s4 pull
-
 if [ "$?" -ne 0 ]; then
   echo "Failed to pull latest changes for volume: $VOLUME_NAME"
   exit 1

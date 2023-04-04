@@ -6,4 +6,4 @@ source $SCRIPT_DIR/base.sh
 REMOTE=$1
 MOUNT_POINT=$2
 
-mount $REMOTE $MOUNT_POINT
+mount_latest_archive $REMOTE $MOUNT_POINT

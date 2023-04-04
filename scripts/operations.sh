@@ -151,7 +151,7 @@ function resize() {
     btrfs_sudo filesystem resize max $VOLUME_PATH
 }
 
-function mount() {
+function mount_latest_archive() {
     source $SCRIPT_DIR/base.sh
     REMOTE_NAME=$1
     REMOTE=$(get_remote $REMOTE_NAME)
