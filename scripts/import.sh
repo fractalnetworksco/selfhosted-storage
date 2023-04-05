@@ -60,12 +60,11 @@ mount_sudo $LOOP_DEV $VOLUME_PATH
 
 # if not root, chown to current user
 if [ "$EUID" -ne 0 ]; then
-  chown_sudo -R $USER:$USER $VOLUME_PATH
+  chown_sudo -R $EUID:$EUID $VOLUME_PATH
 fi
 
 # copy copied data into mounted directory
 cp -a $S4_TMP_PATH/. $VOLUME_PATH
-
 
 # create .s4 directory
 mkdir -p $VOLUME_PATH/.s4/snapshots

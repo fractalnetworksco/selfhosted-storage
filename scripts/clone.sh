@@ -75,8 +75,10 @@ if [ "$?" -ne 0 ]; then
   exit 1
 fi
 
-# ensure user owns the files
-chown_sudo -R "$USER":"$USER" "$CLONE_PATH"
+# if not root, ensure user owns the files
+if [ "$EUID" -ne 0 ]; then
+  chown_sudo -R $EUID:$EUID "$CLONE_PATH"
+fi
 
 # ensure .s4 directory exists inside volume
 mkdir -p "$CLONE_PATH/.s4"
