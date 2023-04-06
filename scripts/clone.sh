@@ -1,138 +1,107 @@
 #!/bin/bash
 
-# usage: clone <remote> [Options] <path (Defaults to .)>
+SCRIPT_DIR=$(dirname $(readlink -f $0))
+source $SCRIPT_DIR/base.sh
 
-# Options:
-#   [--private-key <OpenSSH formatted Private Key>]
-#   [--public-key <OpenSSH formatted Public Key>]
-#   [--volume-name <Name of volume>]
+# define default values for optional arguments
+DOCKER=false
+
+# parse optional arguments using getopts with long options
+OPTS=`getopt -o n:d --long name:,docker -- "$@"`
+eval set -- "$OPTS"
+while true; do
+  case "$1" in
+    -n|--name)
+      VOLUME_NAME="$2"
+      shift 2
+      ;;
+    -d|--docker)
+      DOCKER=true
+      shift
+      ;;
+    --)
+      shift
+      break
+      ;;
+    *)
+      echo "Invalid option: $1" >&2
+      exit 1
+      ;;
+  esac
+done
 
 REMOTE="$1"
 
-# read optional arguments from command line
-while [[ $# -gt 0 ]]; do
-    key="$1"
-    case $key in
-        --private-key)
-            PRIV_KEY="$2"
-            shift # past argument
-            shift # past value
-            ;;
-        --public-key)
-            PUB_KEY="$2"
-            shift # past argument
-            shift # past value
-            ;;
-        --volume-name)
-            VOLUME_NAME="$2"
-            shift # past argument
-            shift # past value
-            ;;
-        --clone-path)
-            CLONE_PATH="$2"
-            shift # past argument
-            shift # past value
-            ;;
-        *)    # unknown option
-            shift # past argument
-            ;;
-    esac
-done
-
-
-# if clone path is set, use it or else use the current directory
-if [ -n "$CLONE_PATH" ]; then
-    cd $CLONE_PATH
+if [ -z "$REMOTE" ]; then
+    echo "Usage: s4 clone <remote> [--name <volume_name>] [--docker]"
+    exit 1
+elif [ -z "$VOLUME_NAME" ]; then
+    VOLUME_NAME=$(basename $(pwd))
 fi
 
-SCRIPT_DIR=$(dirname $(readlink -f $0))
+CLONE_PATH="$(pwd)/$VOLUME_NAME"
 
-source $SCRIPT_DIR/base.sh
-source $SCRIPT_DIR/borg.sh
-source $SCRIPT_DIR/btrfs.sh
-source $SCRIPT_DIR/config.sh
+# create a directory in the current directory with the volume name
+mkdir -p $CLONE_PATH
 
-if [ -n "$REMOTE" ]; then
-    # volume is the part after the last slash
-    # use VOLUME_NAME as REMOTE_VOLUME if set
-    if [ ! -z "$VOLUME_NAME" ]; then
-        REMOTE_VOLUME=$VOLUME_NAME
-    else
-        REMOTE_VOLUME=${REMOTE##*/}
-    fi
-
-    # exit if both a private key and public key are not set
-    if [[ -z "$PRIV_KEY" && -z "$PUB_KEY" ]]; then
-        echo "Clone Error: A private key was provided but not a public key. Please provide both."
-        exit 1
-    elif [[ -z "$PRIV_KEY" && -n "$PUB_KEY" ]]; then
-        echo "Clone Error: A public key was provided but not a private key. Please provide both."
-        exit 1
-    elif [[ -n "$PRIV_KEY" && -z "$PUB_KEY" ]]; then
-        echo "Clone Error: Neither a private key nor public key provided. Both are required in order to clone from a remote."
-        exit 1
-    fi
-
-    # create .s4 directory which will also write provided keys into .s4
-    init_volume "$REMOTE" "$PRIV_KEY" "$PUB_KEY"
-
-else
-    # if no .s4 dir exists, exit
-    if [ ! -d ".s4" ]; then
-        echo "No .s4 dir found"
-        exit 1
-    fi
-    LOCAL_VOLUME=$(get_config .s4/config volume)
-    REMOTE=$(get_config .s4/config remote)
-    init_volume $REMOTE # sets the BORG_RSH variable, etc
-fi
-
-# get the lastest archive from a borg repo and fetch it to the local machine
-latest=$(get_latest_archive $REMOTE)
-# if not latest exit
-if [ -z "$latest" ]; then
-    echo "No snapshots for $REMOTE_VOLUME archive found"
+# try to get the lastest archive from provided remote
+LATEST=$(get_latest_archive $REMOTE)
+if [ -z "$LATEST" ]; then
+    echo "No snapshots for $REMOTE archive found"
     exit 1
 fi
 
-# if REMOTE_VOLUME is set
-if [[ -n "$REMOTE_VOLUME" ]]; then
-    # if current volume is btrfs create subvolume else exit
-    # if $BTRFS is true create subvolume
-    if [[ "$BTRFS" = true ]]; then
-        echo "BTRFS set, creating subvolume"
-        create_subvolume $REMOTE_VOLUME
-        set_owner_current_user $REMOTE_VOLUME
+# get volume's `size` from config file on the remote
+VOLUME_SIZE=$(borg --bypass-lock extract --stdout $REMOTE::$LATEST .s4/config | grep "^size=" | cut -d "=" -f 2)
 
-        cd $REMOTE_VOLUME
-
-        borg extract --progress $REMOTE::$latest
-
-    else
-        # read volume size from remote
-        echo "Getting volume size from remote"
-        borg extract $REMOTE::$latest .s4/volume_size
-        VOLUME_SIZE=$(cat .s4/volume_size)
-        echo "Volume size is $VOLUME_SIZE"
-
-        # create loop device, format as btrfs, then attach to docker volume
-        create_btrfs_loop_device_and_volume "$REMOTE_VOLUME" "$VOLUME_SIZE" "$REMOTE::$latest"
-
-        # # if NO_BTRFS is defined continue
-        # if [ -z "$NO_BTRFS" ]; then
-        #     echo "Current volume is not btrfs, set NO_BTRFS if you are ok with cloning to a non-btrfs volume"
-        #     exit 1
-        # fi
-        # mkdir $REMOTE_VOLUME
-    fi
+# create loop device that is double the size of VOLUME_SIZE
+LOOP_DEV=$(get_next_loop_device)
+s4 create "$S4_LOOP_DEV_PATH/$VOLUME_NAME" --size "$VOLUME_SIZE" --loop-device "$LOOP_DEV"
+if [ "$?" -ne 0 ]; then
+  echo "Failed to create volume: $VOLUME_NAME"
+  exit 1
 fi
 
-# we're cloning a placeholder dir from a catalog
-if [[ -n "$LOCAL_VOLUME" ]]; then
-    if [ "$(ls -A ./data)" ]; then
-        echo "$(pwd)/data is not empty"
-        exit 1
-    fi
-    cd /s4/data
-    borg extract --progress $REMOTE::$latest
+# create docker volume if --docker flag is set
+if [ "$DOCKER" = true ]; then
+  s4 docker create "$LOOP_DEV" "$VOLUME_NAME"
+fi
+
+# mount loop device at clone path
+echo "Mounting $LOOP_DEV at $CLONE_PATH"
+mount_sudo "$LOOP_DEV" "$CLONE_PATH"
+if [ "$?" -ne 0 ]; then
+  echo "Failed to mount volume: $VOLUME_NAME"
+  exit 1
+fi
+
+# if not root, ensure user owns the files
+if [ "$EUID" -ne 0 ]; then
+  chown_sudo -R $EUID:$EUID "$CLONE_PATH"
+fi
+
+# ensure .s4 directory exists inside volume
+mkdir -p "$CLONE_PATH/.s4"
+
+# move created .s4 directory into volume
+mv "$(pwd)/.s4" "$CLONE_PATH/.s4"
+
+# enter after mount
+cd "$CLONE_PATH"
+
+# extract s4 config file from remote in order for `s4 pull` to work
+borg --bypass-lock extract "$REMOTE::$LATEST" .s4/config
+if [ "$?" -ne 0 ]; then
+  echo "Failed to extract s4 config from remote $REMOTE::$LATEST"
+  exit 1
+fi
+
+# unset latest snapshot so that `s4 pull` will pull in latest snapshot
+s4 config set volume last_snapshot ""
+
+# pull in latest snapshot from remote
+s4 pull
+if [ "$?" -ne 0 ]; then
+  echo "Failed to pull latest changes for volume: $VOLUME_NAME"
+  exit 1
 fi

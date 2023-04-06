@@ -1,107 +1,118 @@
 #!/bin/bash
- set -e
+set -e
+
+# usage:
+# s4 init <volume_name> --docker --yes --path <path_to_init>
 
 # script dir
 SCRIPT_DIR=$(dirname $(readlink -f $0))
 
-# change to directory to init
-VOL_PATH=$1
-cd $VOL_PATH
-
 source $SCRIPT_DIR/base.sh
 
-# set VOL to $2 if it set, otherwise set to basename of dir referenced by $1
-[ -n "$2" ] && VOL=$2 || VOL=$(basename $(pwd))
+# define default values for optional arguments
+DOCKER=false
 
-# read --remote argument from command line
-while [[ $# -gt 0 ]]; do
-    key="$1"
-    case $key in
-        --remote)
-            REMOTE="$2"
-            shift # past argument
-            shift # past value
-            ;;
-        --catalog)
-            CATALOG="$2"
-            shift # past argument
-            shift # past value
-            ;;
-        --mosaic)
-            MOSAIC="$2"
-            shift # past argument
-            shift # past value
-            ;;
-        --private-key)
-            PRIV_KEY="$2"
-            shift # past argument
-            shift # past value
-            ;;
-        --public-key)
-            PUB_KEY="$2"
-            shift # past argument
-            shift # past value
-            ;;
-        *)    # unknown option
-            shift # past argument
-            ;;
-    esac
+# parse optional arguments using getopts with long options
+OPTS=`getopt -o s:d:n:y --long size:,name:,docker,yes -- "$@"`
+eval set -- "$OPTS"
+while true; do
+  case "$1" in
+    -s|--size)
+      SIZE="$2"
+      shift 2
+      ;;
+    -d|--docker)
+      DOCKER=true
+      shift
+      ;;
+    -n|--name)
+      VOLUME_NAME="$2"
+      shift 2
+      ;;
+    -y|--yes)
+      YES=true
+      shift
+      ;;
+    --)
+      shift
+      break
+      ;;
+    *)
+      echo "Invalid option: $1" >&2
+      exit 1
+      ;;
+  esac
 done
 
-if [ -n "$REMOTE" ]; then
-    # ensure BTRFS variable is set to true
-    if [ "$BTRFS" != true ]; then
-        echo "Failed to init S4 volume: Directory must be BTRFS."
-        exit 1
-    fi
 
-    # exit if either a private key or public key is provided but not both
-    if [[ -n "$PRIV_KEY" && -z "$PUB_KEY" ]]; then
-        echo "Error: A private key was provided but not a public key. Please provide both or neither."
-        exit 1
-    elif [[ -z "$PRIV_KEY" && -n "$PUB_KEY" ]]; then
-        echo "Error: A public key was provided but not a private key. Please provide both or neither."
-        exit 1
-    fi
+VOLUME_PATH="$1"
 
-    echo "Initializing volume: $VOL"
+# if volume path is not set, default to current directory
+if [ -z $VOLUME_PATH ]; then
+  echo "Setting volume path to current directory"
+  VOLUME_PATH=$(pwd)
+fi
 
-    # create s4 volume that generates ssh keys if keys were not provided
-    if [[ -z "$PRIV_KEY" && -z "$PUB_KEY" ]]; then
-        init_volume "$REMOTE/$VOL"
+# if volume name is not set, default to basename of volume path
+if [ -z $VOLUME_NAME ]; then
+  VOLUME_NAME=$(basename "$VOLUME_PATH")
+fi
 
-    # init volume with provided keys
-    else
-        init_volume "$REMOTE/$VOL" "$PRIV_KEY" "$PUB_KEY"
-    fi
+# prompt the user if they didn't specify the --yes flag
+if [ -z $YES ]; then
+# bigger scary multiline ascii art warning message
+cat <<EOF
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+WARNING: This command will overwrite the contents of the loop device.
+         This will destroy any data on the loop device.
+         This command is intended for importing data from a backup.
+         If you are not sure what you are doing, please exit now.
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+EOF
+  read -p "Contents of $VOLUME_PATH will be copied into a new s4 volume at $VOLUME_PATH/s4, are you sure? [y/N] " -n 1 -r
+  # continue if y
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    echo
+  else
+    echo
+    exit 1
+  fi
+fi
 
-    # dont attempt to register volume if mosaic flag is set
-    if [ -z "$MOSAIC" ]; then
-        # strip everything afte : from the remote
-        SSH_REMOTE=$(echo $REMOTE | cut -d':' -f1)
-        PUB_KEY=$(<$(pwd)/.s4/id_ed25519-$VOL.pub)
+# set BTRFS variable to true if volume is btrfs
+check_btrfs $VOLUME_PATH
 
-        # s4admin uses sudo to run su_add_ssh_key which calls add_ssh_key as the borg user
-        # replace ssh user borg with s4admin user
-        ADMIN_REMOTE=$(echo $SSH_REMOTE | sed "s/borg/s4admin/")
+# Use the arguments in your script
+echo "Positional argument 1 (volume path): $VOLUME_PATH"
+echo "Optional argument 1: $SIZE"
+echo "Optional argument 2: $DOCKER"
+echo "Optional argument 3: $VOLUME_NAME"
 
-        # add volume ssh key to borg user's authorized_keys, only s4admin can do this
-        ssh -p $S4_REMOTE_PORT $ADMIN_REMOTE sudo su_add_ssh_key $VOL \"$PUB_KEY\"
-    fi
+# get loop device to init volume with
+LOOP_DEV=$(get_next_loop_device)
 
-    cd -
+# change to directory to init volume at
+cd $VOLUME_PATH
 
-    # create borg repo on remote
-    borg init --encryption=none $REMOTE/$VOL
+# call s4 create to create loop device
+s4 create "$S4_LOOP_DEV_PATH/$VOLUME_NAME" --size "$SIZE" --loop-device "$LOOP_DEV"
 
+if [ "$?" -ne 0 ]; then
+  echo "Failed to create volume: $VOLUME_NAME"
+  exit 1
+fi
+
+# create docker volume if --docker flag is set
+if [ "$DOCKER" = true ]; then
+  s4 docker create $LOOP_DEV "$VOLUME_NAME"
+fi
+
+if [ -z "$YES" ]; then
+  s4 import "$LOOP_DEV"
 else
-    echo "Error: You must specify a remote for $VOL with --remote borg@remote:/volumes"
-    exit 1
-fi
-# exit if not successful
-if [ $? -ne 0 ]; then
-    echo "Failed to initialize borg repo"
-    exit 1
+  s4 import "$LOOP_DEV" --no-preserve
 fi
 
-echo "Done."
+cd $VOLUME_PATH
+s4 config set volume name $VOLUME_NAME
+s4 config set ~/.s4/volumes/$VOLUME_NAME state generation -1

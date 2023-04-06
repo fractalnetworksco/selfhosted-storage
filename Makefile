@@ -1,4 +1,5 @@
 docker:
+	docker pull alpine:latest
 	# build the docker image
 	docker build -f Dockerfile.target -t s4-target:latest .
 	docker build -f Dockerfile.agent -t s4-agent:latest .

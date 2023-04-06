@@ -37,13 +37,7 @@ function get_generation() {
 
 function take_snapshot() {
     # create a read-only snapshot of the subvolume
-    btrfs_sudo subvolume snapshot -r $1 .s4/snapshots/snapshot-$3
-    write_generation $1 $2
-}
-
-function write_generation() {
-    # write the generation to a file
-    echo $(get_generation $1) > $2
+    btrfs_sudo subvolume snapshot -r $1 .s4/snapshots/snapshot-$2
 }
 
 function cleanup_snapshots() {
@@ -62,7 +56,7 @@ function create_subvolume() {
     btrfs_sudo subvolume create $1
 }
 
-function mkfs_btrfs() { 
+function mkfs_btrfs() {
     # create a btrfs filesystem
     if [[ $(id -u) -ne 0 ]]; then
         sudo mkfs.btrfs $1
@@ -71,9 +65,11 @@ function mkfs_btrfs() {
     fi
 }
 
-# if pwd is btrfs set BTRFS to true
-if is_btrfs .; then
-    export BTRFS=true
-else
-    export BTRFS=false
-fi
+function check_btrfs(){
+    # if pwd is btrfs set BTRFS to true
+    if is_btrfs "$1"; then
+        export BTRFS=true
+    else
+        export BTRFS=false
+    fi
+}

@@ -1,9 +1,8 @@
 FROM alpine
 
 # install openssh and borgbackup
-RUN apk add --no-cache docker-cli openssh-server openssh-client borgbackup btrfs-progs losetup python3 py3-btrfs-progs bash grep py3-llfuse tzdata
+RUN apk add --no-cache docker-cli openssh-server openssh-client borgbackup btrfs-progs losetup python3 py3-btrfs-progs bash grep py3-llfuse tzdata uuidgen rsync
 
-# dev only deps
 RUN apk add --no-cache make py3-pip; pip install ipython
 
 RUN ssh-keygen -A; adduser --disabled-password borg; 
@@ -21,9 +20,18 @@ RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/s
 # https://arlimus.github.io/articles/usepam/
 RUN sed -i 's/borg:!:/borg:*:/' /etc/shadow
 
-# entrypoint
-COPY scripts/replicate.sh /entrypoint.sh
+# copy loadkey script into bin
+COPY scripts/loadkey.sh /usr/bin/loadkey
+
+# copy entrypoint script into root directory
+COPY entrypoint.agent.sh /entrypoint.sh
+
+# copy s4 code into code directory
+COPY . /code
+
+# make sure s4 is installed
+RUN ln -s /code/s4.sh /usr/bin/s4
 
 WORKDIR /s4
 
-ENTRYPOINT ["bash"]
+ENTRYPOINT ["/entrypoint.sh"]
