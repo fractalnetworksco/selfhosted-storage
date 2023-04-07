@@ -1,0 +1,47 @@
+{
+  "description": "Custom storage plugin with losetup",
+  "documentation": "https://github.com/yourusername/yourrepository",
+  "entrypoint": ["/usr/local/bin/entrypoint.sh"],
+  "env": [],
+  "interface": {
+    "types": ["docker.volumedriver/1.0"],
+    "socket": "s4.sock"
+  },
+  "linux": {
+    "capabilities": [
+      "CAP_SYS_ADMIN"
+    ],
+    "AllowAllDevices": true
+  },
+  "mounts": [
+    {
+      "name": "Devices",
+      "source": "/dev",
+      "destination": "/dev",
+      "type": "bind",
+      "options": [
+        "rbind"
+      ]
+    },
+    {
+      "name": "Data",
+      "source": "/var/lib/fractal",
+      "destination": "/var/lib/fractal",
+      "type": "bind",
+      "options": [
+        "rbind"
+      ]
+    }
+],
+  "network": {
+    "type": "null"
+  },
+  "propagatedMount": "/var/lib/fractal",
+  "rootfs": {
+    "type": "layers",
+    "diff_ids": []
+  },
+  "user": {},
+  "volumes": {}
+}
+
