@@ -13,7 +13,7 @@ source $SCRIPT_DIR/base.sh
 DOCKER=false
 
 # parse optional arguments using getopts with long options
-OPTS=`getopt -o s:d:n:y --long size:,name:,docker,yes -- "$@"`
+OPTS=`getopt -o s:d:l:n:y --long size:,name:,label:,docker,yes -- "$@"`
 eval set -- "$OPTS"
 while true; do
   case "$1" in
@@ -24,6 +24,10 @@ while true; do
     -d|--docker)
       DOCKER=true
       shift
+      ;;
+    -l|--label)
+      DOCKER_LABEL="$2"
+      shift 2
       ;;
     -n|--name)
       VOLUME_NAME="$2"
@@ -44,6 +48,11 @@ while true; do
   esac
 done
 
+# exit if a label was specified but docker not specified
+if [[ "$DOCKER" = false && -n "$DOCKER_LABEL" ]]; then
+  echo "Error: --docker must be set if --label specified"
+  exit 1
+fi
 
 VOLUME_PATH="$1"
 
@@ -104,7 +113,7 @@ fi
 
 # create docker volume if --docker flag is set
 if [ "$DOCKER" = true ]; then
-  s4 docker create $LOOP_DEV "$VOLUME_NAME"
+    s4 docker create $LOOP_DEV "$VOLUME_NAME" "$DOCKER_LABEL"
 fi
 
 if [ -z "$YES" ]; then
