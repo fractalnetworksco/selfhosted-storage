@@ -4,7 +4,6 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 source $SCRIPT_DIR/btrfs.sh
 source $SCRIPT_DIR/borg.sh
 source $SCRIPT_DIR/loop_dev.sh
-source $SCRIPT_DIR/s4_volume.sh
 source $SCRIPT_DIR/sha1-compare.sh
 source $SCRIPT_DIR/operations.sh
 
