@@ -120,6 +120,13 @@ function pull () {
     rsync -avzh --delete $TMP_MOUNT $(pwd)
     #borg --bypass-lock extract --progress $REMOTE::$NEW_SNAPSHOT
     umount $TMP_MOUNT
+
+    # write current time into .synced file
+    if [ -z "$TZ" ]; then
+        export TZ='America/Chicago'
+    fi
+    echo "$(date)" > $(pwd)/.s4/.synced
+
     echo "Latest changes synced from remote \"$REMOTE_NAME\""
 }
 

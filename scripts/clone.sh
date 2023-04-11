@@ -45,7 +45,7 @@ elif [[ "$DOCKER" = false && -n "$DOCKER_LABEL" ]]; then
   echo "Error: --docker must be set if --label specified"
   exit 1
 elif [ -z "$VOLUME_NAME" ]; then
-    VOLUME_NAME=$(basename $(pwd))
+    VOLUME_NAME=$(basename $REMOTE)
 fi
 
 CLONE_PATH="$(pwd)/$VOLUME_NAME"
@@ -109,6 +109,7 @@ fi
 s4 config set volume last_snapshot ""
 
 # pull in latest snapshot from remote
+echo "Pulling latest snapshot from $REMOTE"
 s4 pull
 if [ "$?" -ne 0 ]; then
   echo "Failed to pull latest changes for volume: $VOLUME_NAME"

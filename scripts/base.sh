@@ -64,9 +64,11 @@ function set_owner_current_user() {
 }
 
 function check_is_s4() {
-    # make sure .s4 exists in the current directory, else exit
-    if [ ! -d .s4 ]; then
-        echo "Error: "$PWD" is not a s4 volume"
+    # use pwd if no volume path is given
+    VOLUME_PATH="${1:-$(pwd)}"
+    # make sure .s4 exists in the given directory, else exit
+    if [ ! -d "$VOLUME_PATH/.s4" ]; then
+        echo "Error: "$VOLUME_PATH" is not a s4 volume"
         exit 1
     fi
 }
