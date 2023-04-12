@@ -38,3 +38,6 @@ install:
 borg:
 	sudo apt install libacl1-dev
 	pip install borgbackup
+
+agent-export: docker
+	docker save -o s4-agent.tar s4-agent:latest
