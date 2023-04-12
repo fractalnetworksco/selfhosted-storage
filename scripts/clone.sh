@@ -35,6 +35,7 @@ while true; do
 done
 
 REMOTE="$1"
+CLONE_PATH="$2"
 
 # exit if a remote was not given
 if [ -z "$REMOTE" ]; then
@@ -44,14 +45,21 @@ if [ -z "$REMOTE" ]; then
 elif [[ "$DOCKER" = false && -n "$DOCKER_LABEL" ]]; then
   echo "Error: --docker must be set if --label specified"
   exit 1
-elif [ -z "$VOLUME_NAME" ]; then
+fi
+
+# if volume name is not set, default to basename of remote (last part of remote path)
+if [ -z "$VOLUME_NAME" ]; then
     VOLUME_NAME=$(basename $REMOTE)
 fi
 
-CLONE_PATH="$(pwd)/$VOLUME_NAME"
+# default to PWD/volume_name if no path is given
+if [ -z "$CLONE_PATH" ]; then
+    CLONE_PATH="$(pwd)"
+fi
 
-# create a directory in the current directory with the volume name
-mkdir -p $CLONE_PATH
+# create a directory at clone_path/volume_name
+CLONE_PATH="$CLONE_PATH/$VOLUME_NAME"
+mkdir -p "$CLONE_PATH"
 
 # try to get the lastest archive from provided remote
 LATEST=$(get_latest_archive $REMOTE)

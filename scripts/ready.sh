@@ -12,6 +12,7 @@ source $SCRIPT_DIR/base.sh
 # if $1 is specified, set VOLUME_PATH to $1, otherwise use pwd
 VOLUME_PATH=${1:-$(pwd)}
 
+# ensure the given path is an s4 volume
 check_is_s4 $VOLUME_PATH
 
 # exit 0 if $VOLUME_PATH/.s4/.synced exists

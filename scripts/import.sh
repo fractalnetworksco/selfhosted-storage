@@ -29,13 +29,13 @@ while true; do
   esac
 done
 
-VOLUME_PATH=$(pwd)
-TMP_FOLDER_NAME=$(basename $VOLUME_PATH)
 LOOP_DEV=${LOOP_DEV:-$1}
+VOLUME_PATH="${2:-$(pwd)}"
+MOUNT_POINT="${3:-$VOLUME_PATH}"
+TMP_FOLDER_NAME=$(basename $VOLUME_PATH)
 
 # copy data to s4-tmp directory
 S4_TMP_PATH="/tmp/s4-tmp-$TMP_FOLDER_NAME"
-
 
 # makes sure hidden files are moved as well
 cp -a $VOLUME_PATH $S4_TMP_PATH
@@ -50,41 +50,48 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# create s4 directory inside original directory
-mkdir -p $VOLUME_PATH
+# create mount point directory
+mkdir -p $MOUNT_POINT
 
-# mount at created s4 directory
-mount_sudo $LOOP_DEV $VOLUME_PATH
+# mount directory
+mount_sudo $LOOP_DEV $MOUNT_POINT
 
-# ensure current user owns the mounted directory
-
-# if not root, chown to current user
+# if not root, ensure current user owns the mounted directory
 if [ "$EUID" -ne 0 ]; then
-  chown_sudo -R $EUID:$EUID $VOLUME_PATH
+  chown_sudo -R $EUID:$EUID $MOUNT_POINT
 fi
 
 # copy copied data into mounted directory
-cp -a $S4_TMP_PATH/. $VOLUME_PATH
+cp -a $S4_TMP_PATH/. $MOUNT_POINT
 
-# create .s4 directory
-mkdir -p $VOLUME_PATH/.s4/snapshots
+# create .s4 directory at mounted directory
+mkdir -p $MOUNT_POINT/.s4/snapshots
 
 # everything matches so clean up backup
 # remove everything in backup directory
 rm -rf $S4_TMP_PATH
-echo "s4 volume successfully created at $VOLUME_PATH"
+echo "S4 volume successfully created at $MOUNT_POINT"
 
 # ask the user if they want to remove the original data if they didn't specify --no-preserve
 if [ -z "$NO_PRESERVE" ]; then
-  read -p "WARNING: Do you want to remove the original data? [y/N] " -n 1 -r
+  read -p "WARNING: Do you want to remove the original data? [Y/N] " -n 1 -r
   echo
   if [[ $REPLY =~ ^[Nn]$ ]]; then
       exit 0
   fi
 fi
 
-umount_sudo $VOLUME_PATH
-find $VOLUME_PATH -maxdepth 1 -mindepth 1 -exec rm -rf {} \;
-mount_sudo $LOOP_DEV $VOLUME_PATH
+# if mounted at PWD, then we need to re-enter the directory
+if [ "$MOUNT_POINT" = "$VOLUME_PATH" ]; then
+  # unmount and remove everything in the directory
+  umount_sudo $VOLUME_PATH
+  find $VOLUME_PATH -maxdepth 1 -mindepth 1 -exec rm -rf {} \;
 
-echo "Done. You will need to re-enter this directory \`cd $VOLUME_PATH\` to continue."
+  # remount at directory
+  mount_sudo $LOOP_DEV $VOLUME_PATH
+  echo "Done. You will need to re-enter this directory \`cd $VOLUME_PATH\` to continue."
+else
+  # remove everything from VOLUME_PATH
+  find $VOLUME_PATH -maxdepth 1 -mindepth 1 -exec rm -rf {} \;
+  echo "Done. S4 volume has been mounted at $MOUNT_POINT. Your data has been moved to $MOUNT_POINT. You can safely remove this directory."
+fi

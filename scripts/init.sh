@@ -54,17 +54,20 @@ if [[ "$DOCKER" = false && -n "$DOCKER_LABEL" ]]; then
   exit 1
 fi
 
-VOLUME_PATH="$1"
-
 # if volume path is not set, default to current directory
-if [ -z $VOLUME_PATH ]; then
-  echo "Setting volume path to current directory"
-  VOLUME_PATH=$(pwd)
+VOLUME_PATH="${1:-$(pwd)}"
+
+# if volume path is a relative path, get its absolute path
+if [[ $VOLUME_PATH != /* ]]; then
+  VOLUME_PATH="$(realpath $VOLUME_PATH)"
 fi
+
+# if mount point is not set, default to volume path
+MOUNT_POINT="${2:-$VOLUME_PATH}"
 
 # if volume name is not set, default to basename of volume path
 if [ -z $VOLUME_NAME ]; then
-  VOLUME_NAME=$(basename "$VOLUME_PATH")
+  VOLUME_NAME="$(basename $VOLUME_PATH)"
 fi
 
 # prompt the user if they didn't specify the --yes flag
@@ -78,7 +81,7 @@ WARNING: This command will overwrite the contents of the loop device.
          If you are not sure what you are doing, please exit now.
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 EOF
-  read -p "Contents of $VOLUME_PATH will be copied into a new s4 volume at $VOLUME_PATH/s4, are you sure? [y/N] " -n 1 -r
+  read -p "Contents of $VOLUME_PATH will be copied into a new s4 volume at $MOUNT_POINT, are you sure? [y/N] " -n 1 -r
   # continue if y
   if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo
@@ -89,10 +92,10 @@ EOF
 fi
 
 # set BTRFS variable to true if volume is btrfs
-check_btrfs $VOLUME_PATH
+check_btrfs $MOUNT_POINT
 
-# Use the arguments in your script
 echo "Positional argument 1 (volume path): $VOLUME_PATH"
+echo "Positional argument 2 (mount point): $MOUNT_POINT"
 echo "Optional argument 1: $SIZE"
 echo "Optional argument 2: $DOCKER"
 echo "Optional argument 3: $VOLUME_NAME"
@@ -100,7 +103,12 @@ echo "Optional argument 3: $VOLUME_NAME"
 # get loop device to init volume with
 LOOP_DEV=$(get_next_loop_device)
 
-# change to directory to init volume at
+# check if volume path exists and is a directory
+if [ ! -d "$MOUNT_POINT" ]; then
+  mkdir -p $MOUNT_POINT
+fi
+
+# change to directory to init volume from
 cd $VOLUME_PATH
 
 # call s4 create to create loop device
@@ -117,11 +125,11 @@ if [ "$DOCKER" = true ]; then
 fi
 
 if [ -z "$YES" ]; then
-  s4 import "$LOOP_DEV"
+  s4 import "$LOOP_DEV" "$VOLUME_PATH" "$MOUNT_POINT"
 else
-  s4 import "$LOOP_DEV" --no-preserve
+  s4 import "$LOOP_DEV" "$VOLUME_PATH" "$MOUNT_POINT" --no-preserve
 fi
 
-cd $VOLUME_PATH
+cd $MOUNT_POINT
 s4 config set volume name $VOLUME_NAME
 s4 config set ~/.s4/volumes/$VOLUME_NAME state generation -1
