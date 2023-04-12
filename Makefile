@@ -1,3 +1,4 @@
+SHELL = '/bin/bash'
 docker:
 	docker pull alpine:latest
 	# build the docker image
