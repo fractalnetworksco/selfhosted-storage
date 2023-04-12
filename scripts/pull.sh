@@ -6,4 +6,5 @@ if [ -n "$S4_PRIV_KEY" ]; then
 fi
 
 REMOTE="$1"
-pull $REMOTE
+ARCHIVE="$2"
+pull $REMOTE $ARCHIVE

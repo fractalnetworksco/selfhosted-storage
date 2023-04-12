@@ -93,32 +93,40 @@ function push() {
 function pull () {
     source $SCRIPT_DIR/base.sh
     check_is_s4
-    REMOTE_NAME=$1
+    if [ "$#" -eq 2 ]; then
+        REMOTE_NAME=$1
+        ARCHIVE=$2
+    else
+        ARCHIVE=$1
+    fi
     # if $REMOTE_NAME empty, use default remote
     if [ -z "$REMOTE_NAME" ]; then
         REMOTE_NAME=$(s4 config get default remote)
     fi
-    echo "Checking with remote \"$REMOTE_NAME\" for new snapshots..."
-    NEW_SNAPSHOT=$(new_snapshot_exists $REMOTE_NAME)
-    # exit if return code not equal 0
-    if [ "$?" -ne 0 ]; then
-        echo "Volume is up to date"
-        return 1
+    # if ARCHIVE is not defined set ARCHIVE to the last snapshot
+    if [ -z "$ARCHIVE" ]; then
+        echo "Checking with remote \"$REMOTE_NAME\" for new snapshots..."
+        ARCHIVE=$(new_snapshot_exists $REMOTE_NAME)
+        # exit if return code not equal 0
+        if [ "$?" -ne 0 ]; then
+            echo "Volume is up to date"
+            return 1
+        fi
     fi
     # assert that NEW_SNAPSHOT is a uuidv4
     # make me a function
-    if ! [[ $NEW_SNAPSHOT =~ ^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$ ]]; then
-        echo "new_snapshot_exists returned invalid uuid: $NEW_SNAPSHOT"
-        return 1
-    fi
+    # if ! [[ $ARCHIVE =~ ^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$ ]]; then
+    #     echo "new_snapshot_exists returned invalid uuid: $ARCHIVE"
+    #     return 1
+    # fi
     REMOTE=$(get_remote $REMOTE_NAME)
-    TMP_MOUNT="/tmp/s4/$NEW_SNAPSHOT/"
+    TMP_MOUNT="/tmp/s4/$ARCHIVE/"
     mkdir -p $TMP_MOUNT
     echo "New changes found, syncing from remote \"$REMOTE_NAME\""
-    s4 mount $REMOTE_NAME $TMP_MOUNT
+    mount_archive $REMOTE_NAME $TMP_MOUNT $ARCHIVE
     # sync mounted volume with local volume
     rsync -avzh --delete $TMP_MOUNT $(pwd)
-    #borg --bypass-lock extract --progress $REMOTE::$NEW_SNAPSHOT
+    #borg --bypass-lock extract --progress $REMOTE::$ARCHIVE
     umount $TMP_MOUNT
 
     # write current time into .synced file
@@ -158,13 +166,3 @@ function resize() {
     btrfs_sudo filesystem resize max $VOLUME_PATH
 }
 
-function mount_latest_archive() {
-    source $SCRIPT_DIR/base.sh
-    REMOTE_NAME=$1
-    REMOTE=$(get_remote $REMOTE_NAME)
-    MOUNT_POINT=$2
-    check_is_s4
-    LATEST_SNAPSHOT=$(get_latest_archive $REMOTE)
-    borg --bypass-lock mount $REMOTE::$LATEST_SNAPSHOT $MOUNT_POINT
-    echo "Mounted latest archive for volume $REMOTE::$LATEST_SNAPSHOT to $MOUNT_POINT"
-}
