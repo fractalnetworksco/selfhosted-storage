@@ -30,6 +30,6 @@ if [ "$ACTION" == "sync" ]; then
     FUSE_DEVICE="--device /dev/fuse --security-opt apparmor:unconfined"
 fi
 
-container_id=$(docker run $FUSE_DEVICE --cap-add SYS_ADMIN --restart always --name s4-agent-$VOLUME_NAME -v $(pwd):/s4 -d s4-agent:latest $ACTION)
+container_id=$(docker run $FUSE_DEVICE --cap-add SYS_ADMIN --restart always --name s4-agent-$VOLUME_NAME -v $(pwd):/s4 -d s4-agent:latest "s4 $ACTION")
 sleep 1
 S4_PRIV_KEY=$S4_PRIV_KEY s4 docker loadkey $container_id
