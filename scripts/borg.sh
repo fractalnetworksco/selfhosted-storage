@@ -30,5 +30,10 @@ function mount_archive() {
         ARCHIVE=$3
     fi
     borg --bypass-lock mount $REMOTE::$ARCHIVE $MOUNT_POINT
+    # exit if mount failed
+    if [ "$?" -ne 0 ]; then
+        echo "Failed to mount archive"
+        exit 1
+    fi
     echo "Mounted latest archive for volume $REMOTE::$ARCHIVE to $MOUNT_POINT"
 }

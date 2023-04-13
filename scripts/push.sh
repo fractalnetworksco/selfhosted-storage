@@ -24,9 +24,5 @@ while true; do
   esac
 done
 
-if [ -n "$S4_PRIV_KEY" ]; then
-    s4 loadkey
-fi
-
 REMOTE_NAME=$1
 push "$REMOTE_NAME"

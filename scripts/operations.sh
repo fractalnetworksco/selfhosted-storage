@@ -93,18 +93,20 @@ function push() {
 function pull () {
     source $SCRIPT_DIR/base.sh
     check_is_s4
-    if [ "$#" -eq 2 ]; then
-        REMOTE_NAME=$1
-        ARCHIVE=$2
-    else
-        ARCHIVE=$1
-    fi
+    set -x
     # if $REMOTE_NAME empty, use default remote
     if [ -z "$REMOTE_NAME" ]; then
         REMOTE_NAME=$(s4 config get default remote)
     fi
-    # if ARCHIVE is not defined set ARCHIVE to the last snapshot
-    if [ -z "$ARCHIVE" ]; then
+    # if 2 args passed we are specifying remote and archive to pull
+    if [ "$#" -eq 2 ]; then
+        REMOTE_NAME=$1
+        ARCHIVE=$2
+    # single argument means we are pulling $ARCHIVE from the default repo (for . this volume)
+    elif [ "$#" -eq 1 ]; then
+            ARCHIVE=$1
+    else
+        # no args means we are pulling latest archive from default remote
         echo "Checking with remote \"$REMOTE_NAME\" for new snapshots..."
         ARCHIVE=$(new_snapshot_exists $REMOTE_NAME)
         # exit if return code not equal 0

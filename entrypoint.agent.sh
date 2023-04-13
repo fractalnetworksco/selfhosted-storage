@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# remove ssh-agent socket if it exists
+rm -rf /tmp/ssh-agent.sock
+
 # start ssh-agent with socket at /tmp/ssh-agent.sock
 eval `ssh-agent -a /tmp/ssh-agent.sock`
 
@@ -7,4 +10,4 @@ eval `ssh-agent -a /tmp/ssh-agent.sock`
 s4 loadkey
 
 # run whatever command was given to the container
-bash -c "$@"
+bash -c "$*"
