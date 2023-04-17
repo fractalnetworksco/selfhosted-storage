@@ -3,7 +3,7 @@ import sh
 import subprocess
 from os import chdir
 # cant call teardown function just `teardown` for some reason
-from s4_test_helpers import setup, cleanup 
+from s4_test_helpers import setup, cleanup, volume_size_mb
 
 @pytest.mark.no_teardown
 def test_no_arg_invocation():
@@ -12,9 +12,51 @@ def test_no_arg_invocation():
     assert b'usage: s4.sh <subcommand> <args>' in error.value.stdout
 
 def test_volume_init_of_pwd(s4_configure_test):
+    # sanity check make sure there is no existing volume mounted at /tmp/s4-test
+    assert '/tmp/s4-test' not in sh.mount()
     s4_configure_test(setup, cleanup)
     sh.s4('init', '--yes')
     # assert there is a volume mounted at /tmp/s4-test
-    assert sh.mount().stdout.decode().find('/tmp/s4-test') != -1
+    assert '/tmp/s4-test' in sh.mount()
+    # volume size should default to 120M when `s4 init`ing an empty dir
+    assert volume_size_mb('/tmp/s4-test') == 120
 
+def test_volume_init_with_size(s4_configure_test):
+    assert '/tmp/s4-test' not in sh.mount()
+    s4_configure_test(setup, cleanup)
+    sh.s4('init', '--yes', '--size', '500')
+    assert '/tmp/s4-test' in sh.mount()
+    assert volume_size_mb('/tmp/s4-test') == 500
+
+def test_volume_init_no_size_should_double(s4_configure_test):
+    '''
+    calling `s4 init` with out the --size argument should create volume that is double the size of the source folder
+    '''
+    def double_size_setup():
+        setup()
+        sh.dd('if=/dev/zero', 'of=/tmp/s4-test/testfile', 'bs=1M', 'count=250')
+
+    assert '/tmp/s4-test' not in sh.mount()
+    s4_configure_test(double_size_setup, cleanup)
+    sh.s4('init', '--yes')
+    assert '/tmp/s4-test' in sh.mount()
+    assert volume_size_mb('/tmp/s4-test') == 502
+
+
+def test_volume_init_invalid_size_should_fail(s4_configure_test):
+    assert '/tmp/s4-test' not in sh.mount()
+    s4_configure_test(setup, lambda: None)
+    with pytest.raises(sh.ErrorReturnCode) as error:
+        sh.s4('init', '--yes', '--size', '0')
+    assert b'File size invalid or not specified' in error.value.stdout
+
+
+def test_volume_init_existing_volume(s4_configure_test):
+    assert '/tmp/s4-test' not in sh.mount()
+    s4_configure_test(setup, cleanup)
+    sh.s4('init', '--yes')
+    assert '/tmp/s4-test' in sh.mount()
+    with pytest.raises(sh.ErrorReturnCode) as error:
+        # calling init again should fail
+        sh.s4('init', '--yes')
 

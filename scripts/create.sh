@@ -1,6 +1,5 @@
 #!/bin/bash
  set -e
-
 # Usage: create <volume_name>
 
 # script dir
@@ -44,7 +43,11 @@ if [ -z "$LOOP_DEV" ]; then
   LOOP_DEV=$(get_next_loop_device)
 fi
 
-LOOP_DEV_FILE=$LOOP_FILE_PATH-$(basename $LOOP_DEV)
+# create a symlink that points the loop device so we have a path for the volume to give docker
+ln -s $LOOP_DEV $LOOP_FILE_PATH
+
+# append -loop to the stable symlink path for the actual loop file path
+LOOP_DEV_FILE=$LOOP_FILE_PATH-loop
 
 # if SIZE is set, create a file of that size
 if [ -n "$SIZE" ]; then

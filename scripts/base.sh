@@ -50,12 +50,35 @@ function mkdir_sudo(){
     fi
 }
 
-
 function truncate_sudo() {
     if [[ $(id -u) -ne 0 ]]; then
         sudo truncate $@
     else
         truncate $@
+    fi
+}
+
+function dd_sudo() {
+    if [[ $(id -u) -ne 0 ]]; then
+        sudo dd $@
+    else
+        dd $@
+    fi
+}
+
+function losetup_sudo() {
+    if [[ $(id -u) -ne 0 ]]; then
+        sudo losetup $@
+    else
+        losetup $@
+    fi
+}
+
+function mknod_sudo(){
+    if [[ $(id -u) -ne 0 ]]; then
+        sudo mknod $@
+    else
+        mknod $@
     fi
 }
 
@@ -69,6 +92,16 @@ function check_is_s4() {
     # make sure .s4 exists in the given directory, else exit
     if [ ! -d "$VOLUME_PATH/.s4" ]; then
         echo "Error: "$VOLUME_PATH" is not a s4 volume"
+        exit 1
+    fi
+}
+
+function check_is_not_s4() {
+    # use pwd if no volume path is given
+    VOLUME_PATH="${1:-$(pwd)}"
+    # make sure .s4 exists in the given directory, else exit
+    if [ -d "$VOLUME_PATH/.s4" ]; then
+        echo "Error: "$VOLUME_PATH" is already an s4 volume"
         exit 1
     fi
 }

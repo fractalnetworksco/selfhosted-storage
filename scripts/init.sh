@@ -57,6 +57,9 @@ fi
 # if volume path is not set, default to current directory
 VOLUME_PATH="${1:-$(pwd)}"
 
+# exit if $VOLUME_PATH is already an s4 volume
+check_is_not_s4 $VOLUME_PATH
+
 # if volume path is a relative path, get its absolute path
 if [[ $VOLUME_PATH != /* ]]; then
   VOLUME_PATH="$(realpath $VOLUME_PATH)"
@@ -74,21 +77,28 @@ fi
 if [ -z $YES ]; then
 # bigger scary multiline ascii art warning message
 cat <<EOF
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-WARNING: This command will move the contents of $VOLUME_PATH into a new s4 volume that is double the size.
-         You will be prompted to remove the original data after the operation is complete.
-         The s4 volume will be mounted at the original path of the data $VOLUME_PATH.
-         If you are not sure what you are doing, please exit now.
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    The following command will perform the following operations:
+
+         1) Copy the existing contents of $VOLUME_PATH to a temporary directory.
+         2) Create a btrfs formatted loop device that is double the size of the contents of $VOLUME_PATH
+         3) Verify that the copy is exactly the same as the original contents of $VOLUME_PATH
+         4) Move the temporary copy to the btrfs loop device volume.
+         5) Optionally, remove existing contents of $VOLUME_PATH
+         6) Mount the loop device at the original path of the data $VOLUME_PATH.
+
+    You will be prompted to remove the original data after the copy operation is complete.
+    If you are not sure what you are doing, please exit now.
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 EOF
-  read -p "Contents of $VOLUME_PATH will be copied into a new s4 volume at $MOUNT_POINT, are you sure? [y/N] " -n 1 -r
-  # continue if y
-  if [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo
-  else
-    echo
-    exit 1
-  fi
+read -p "Contents of $VOLUME_PATH will be copied into a new s4 volume and mounted at $MOUNT_POINT, are you sure? [y/N] " -n 1 -r
+# continue if y
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+  echo
+else
+  echo
+  exit 1
+fi
 fi
 
 # set BTRFS variable to true if volume is btrfs
@@ -104,12 +114,6 @@ echo "Optional argument 3: $VOLUME_NAME"
 LOOP_DEV=$(get_next_loop_device)
 
 mkdir -p $MOUNT_POINT
-
-# make sure $MOUNT_POINT is empty else exit
-if [ "$(ls -A $MOUNT_POINT)" ]; then
-  echo "Error: $MOUNT_POINT is not empty"
-  exit 1
-fi
 
 # change to directory to init volume from
 cd $VOLUME_PATH
