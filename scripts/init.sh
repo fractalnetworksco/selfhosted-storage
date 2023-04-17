@@ -75,9 +75,9 @@ if [ -z $YES ]; then
 # bigger scary multiline ascii art warning message
 cat <<EOF
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-WARNING: This command will overwrite the contents of the loop device.
-         This will destroy any data on the loop device.
-         This command is intended for importing data from a backup.
+WARNING: This command will move the contents of $VOLUME_PATH into a new s4 volume that is double the size.
+         You will be prompted to remove the original data after the operation is complete.
+         The s4 volume will be mounted at the original path of the data $VOLUME_PATH.
          If you are not sure what you are doing, please exit now.
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 EOF
@@ -103,9 +103,12 @@ echo "Optional argument 3: $VOLUME_NAME"
 # get loop device to init volume with
 LOOP_DEV=$(get_next_loop_device)
 
-# check if volume path exists and is a directory
-if [ ! -d "$MOUNT_POINT" ]; then
-  mkdir -p $MOUNT_POINT
+mkdir -p $MOUNT_POINT
+
+# make sure $MOUNT_POINT is empty else exit
+if [ "$(ls -A $MOUNT_POINT)" ]; then
+  echo "Error: $MOUNT_POINT is not empty"
+  exit 1
 fi
 
 # change to directory to init volume from

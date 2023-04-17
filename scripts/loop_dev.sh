@@ -17,7 +17,9 @@ function mknod_sudo(){
 }
 
 function create_loop_device() {
-    losetup_sudo -P $1 $2
+    DEVICE="$1" #/dev/loop0
+    FILE="$2" #/path/to/some/file
+    losetup_sudo -P $DEVICE $FILE
 }
 
 function get_loop_device_for_file() {
@@ -61,39 +63,49 @@ function dd_sudo() {
 }
 
 function create_loop_file() {
-    # creates a file of double the size of the current directory
+    # creates a dense file of the specified size OR a dense file double the size of the directory specified by $1
 
     # args:
     #   $1 is the directory to get the size of
     #   $2 is the file to create
     #   $3 is the size to use
+    DIR="$1"
+    LOOP_FILE="$2"
+    SIZE="$3"
 
-    echo "Creating file that is double the size of $1 at $2"
-    # if $3 is not given, get the size of $1
-    if [ -z $3 ]; then
-        size=$(du -sm $1 | awk '{print $1}')
-    # $3 was given, so use that as the size
-    else
-        size=$3
-    fi
-
-    if [ -f $2 ]; then
-        echo "$2 already exists"
+    # exit if $LOOP_FILE already exists
+    if [ -f $LOOP_FILE ]; then
+        echo "$LOOP_FIVE already exists"
         exit 1
     fi
 
-    doubled=$((size * 2))
-    # make sure $1 has enough space + 20%
+    # if $SIZE is not given, get the size of $DIR and double it later
+    if [ -z "$SIZE" ]; then
+        SIZE=$(du -sm "$DIR" | awk '{print $1}')
+        DOUBLE=1
+    fi
+    # make sure $SIZE is defined and a number else exit
+    if [ -z $SIZE ] || ! [[ $SIZE =~ ^[0-9]+$ ]]; then
+        echo "File size invalid or not specified, got: $SIZE"
+        echo "Please provide the size of the volume in megabytes."
+        exit 1
+    fi
+
+    if [ ! -z $DOUBLE ]; then
+        SIZE=$((SIZE * 2))
+    fi
+    # make sure we have enough space to create the file + 20%
     FREE_SPACE=$(df -m $S4_LOOP_DEV_PATH | awk 'NR==2{print $4}')
     # add 20% to FREE_SPACE
     FREE_SPACE=$((FREE_SPACE + (FREE_SPACE / 5)))
-    if [ $doubled -gt $FREE_SPACE ]; then
-        echo "Not enough space to create file of size $doubled"
+    if [ $SIZE -gt $FREE_SPACE ]; then
+        echo "Not enough space to create file of size $SIZE"
         exit 1
     fi
-    # if double less that 120MB, set to 120MB
-    if [ $doubled -lt 120 ]; then
-        doubled=120
+    # if $SIZE less than btrfs minimum, set to 120MB
+    if [ $SIZE -lt 120 ]; then
+        SIZE=120
     fi
-    dd_sudo if=/dev/zero of=$2 bs=1M count=$doubled
+
+    dd_sudo if=/dev/zero of="$LOOP_FILE" bs=1M count=$SIZE
 }

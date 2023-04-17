@@ -33,6 +33,11 @@ done
 source $SCRIPT_DIR/base.sh
 
 LOOP_FILE_PATH="$1"
+# exit if $1 is not set
+if [ -z "$LOOP_FILE_PATH" ]; then
+    echo "Usage: create <loop_file_path>"
+    exit 1
+fi
 
 # if loop-device not set
 if [ -z "$LOOP_DEV" ]; then
@@ -43,6 +48,7 @@ LOOP_DEV_FILE=$LOOP_FILE_PATH-$(basename $LOOP_DEV)
 
 # if SIZE is set, create a file of that size
 if [ -n "$SIZE" ]; then
+    echo "Got size: $SIZE"
     create_loop_file $(pwd) $LOOP_DEV_FILE $SIZE
 else
     # allocate file twice the size of the current directory being initialized
