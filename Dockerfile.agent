@@ -1,7 +1,7 @@
 FROM alpine
 
 # install openssh and borgbackup
-RUN apk add --no-cache docker-cli openssh-server openssh-client borgbackup btrfs-progs losetup py3-btrfs-progs bash grep py3-llfuse tzdata uuidgen rsync
+RUN apk add --no-cache docker-cli openssh-server openssh-client borgbackup btrfs-progs losetup bash grep py3-llfuse tzdata uuidgen rsync
 
 # Developer tools
 # RUN apk add --no-cache make py3-pip; pip install ipython
