@@ -72,7 +72,7 @@ function push() {
         echo "Taking new snapshot"
         take_snapshot $VOLUME_PATH $SNAPSHOT_UUID
         cd $VOLUME_PATH/.s4/snapshots/snapshot-$SNAPSHOT_UUID
-        borg create --progress $REMOTE::$SNAPSHOT_UUID .
+        borg create --progress $REMOTE::$SNAPSHOT_UUID . --exclude $VOLUME_PATH/.s4/.synced
         # exit if replication failed
         if [ $? -ne 0 ]; then
             echo "Failed to replicate borg snapshot"
@@ -85,6 +85,13 @@ function push() {
         sync
         # store the current generation in the volume config so we can detect changes going forward
         s4 config set ~/.s4/volumes/$VOLUME_NAME state generation $(get_generation $VOLUME_PATH)
+
+        # write current time into .synced file
+        if [ -z "$TZ" ]; then
+            export TZ='America/Chicago'
+        fi
+        echo "$(date)" > "$VOLUME_PATH/.s4/.synced"
+
     else
         echo "No changes since last push"
     fi
@@ -112,7 +119,7 @@ function pull () {
         # exit if return code not equal 0
         if [ "$?" -ne 0 ]; then
             echo "Volume is up to date"
-            return 1
+            return 0
         fi
     fi
     # assert that NEW_SNAPSHOT is a uuidv4

@@ -29,7 +29,7 @@ function mount_archive() {
     else
         ARCHIVE=$3
     fi
-    borg --bypass-lock mount $REMOTE::$ARCHIVE $MOUNT_POINT
+    borg --bypass-lock mount --exclude .s4/.synced $REMOTE::$ARCHIVE $MOUNT_POINT
     # exit if mount failed
     if [ "$?" -ne 0 ]; then
         echo "Failed to mount archive"

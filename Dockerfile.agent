@@ -1,11 +1,12 @@
 FROM alpine
 
 # install openssh and borgbackup
-RUN apk add --no-cache docker-cli openssh-server openssh-client borgbackup btrfs-progs losetup python3 py3-btrfs-progs bash grep py3-llfuse tzdata uuidgen rsync
+RUN apk add --no-cache docker-cli openssh-server openssh-client borgbackup btrfs-progs losetup py3-btrfs-progs bash grep py3-llfuse tzdata uuidgen rsync
 
-RUN apk add --no-cache make py3-pip; pip install ipython
+# Developer tools
+# RUN apk add --no-cache make py3-pip; pip install ipython
 
-RUN ssh-keygen -A; adduser --disabled-password borg; 
+RUN ssh-keygen -A; adduser --disabled-password borg;
 RUN mkdir /home/borg/.ssh; chown borg:borg /home/borg/.ssh; chmod 700 /home/borg/.ssh;
 
 COPY config/authorized_keys /home/borg/.ssh/authorized_keys
