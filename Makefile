@@ -45,4 +45,4 @@ agent-export: docker
 
 test:
 	docker build -t s4-test:latest -f Dockerfile.test .
-	docker run --privileged --rm -it --name s4-tests -v `pwd`:/code s4-test:latest
+	docker run --privileged --rm --name s4-tests -v `pwd`:/code s4-test:latest
