@@ -57,16 +57,16 @@ if [ -z "$CLONE_PATH" ]; then
     CLONE_PATH="$(pwd)"
 fi
 
-# create a directory at clone_path/volume_name
-CLONE_PATH="$CLONE_PATH/$VOLUME_NAME"
-mkdir -p "$CLONE_PATH"
-
 # try to get the lastest archive from provided remote
-LATEST=$(get_latest_archive $REMOTE)
+LATEST=$(get_latest_archive $REMOTE) || exit 1
 if [ -z "$LATEST" ]; then
     echo "No snapshots for $REMOTE archive found"
     exit 1
 fi
+
+# create a directory at clone_path/volume_name
+CLONE_PATH="$CLONE_PATH/$VOLUME_NAME"
+mkdir -p "$CLONE_PATH"
 
 # get volume's `size` from config file on the remote
 VOLUME_SIZE=$(borg --bypass-lock extract --stdout $REMOTE::$LATEST .s4/config | grep "^size=" | cut -d "=" -f 2)

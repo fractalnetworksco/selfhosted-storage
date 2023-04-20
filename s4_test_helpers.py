@@ -18,5 +18,8 @@ def cleanup():
     sh.rm('-rf', '/var/lib/fractal/s4-test-loop')
 
 def volume_size_mb(volume_path: str):
+    '''
+    return the size of volume_path in MB
+    '''
     vol_statvfs = statvfs(volume_path)
     return vol_statvfs.f_frsize * vol_statvfs.f_blocks // 1048576 # 1024^2

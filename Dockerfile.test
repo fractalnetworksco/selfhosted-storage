@@ -1,0 +1,9 @@
+FROM s4-agent:latest
+
+COPY tests/requirements.txt /code/tests/requirements.txt
+
+RUN apk add py3-pip; pip install -r /code/tests/requirements.txt 
+
+WORKDIR /code/tests
+
+ENTRYPOINT ["pytest"]

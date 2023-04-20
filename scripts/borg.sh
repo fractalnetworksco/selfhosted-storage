@@ -1,5 +1,6 @@
 #!/bin/bash
 function get_latest_archive() {
+    echo "Getting latest archive for $1"
     REPO=$1
     borg --bypass-lock list --short --last 1 $REPO
 }

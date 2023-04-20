@@ -42,3 +42,7 @@ borg:
 
 agent-export: docker
 	docker save -o s4-agent.tar s4-agent:latest
+
+test:
+	docker build -t s4-test:latest -f Dockerfile.test .
+	docker run --privileged --rm -it --name s4-tests -v `pwd`:/code s4-test:latest

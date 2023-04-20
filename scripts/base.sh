@@ -1,5 +1,9 @@
 #!/bin/bash
 
+if [ ! -z "$DEBUG" ]; then
+    set -x
+fi
+
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 source $SCRIPT_DIR/btrfs.sh
 source $SCRIPT_DIR/borg.sh
@@ -101,7 +105,7 @@ function check_is_not_s4() {
     VOLUME_PATH="${1:-$(pwd)}"
     # make sure .s4 exists in the given directory, else exit
     if [ -d "$VOLUME_PATH/.s4" ]; then
-        echo "Error: "$VOLUME_PATH" is already an s4 volume"
+        echo "Error: "$VOLUME_PATH" is already a s4 volume"
         exit 1
     fi
 }
