@@ -39,7 +39,7 @@ function create_loop_file() {
 
     # exit if $LOOP_FILE already exists
     if [ -f $LOOP_FILE ]; then
-        echo "$LOOP_FIVE already exists"
+        echo "$LOOP_FILE already exists"
         exit 1
     fi
 

@@ -34,7 +34,7 @@ while true; do
   esac
 done
 
-REMOTE="$1"
+export REMOTE="$1"
 CLONE_PATH="$2"
 
 # exit if a remote was not given
@@ -118,8 +118,16 @@ s4 config set volume last_snapshot ""
 
 # pull in latest snapshot from remote
 echo "Pulling latest snapshot from $REMOTE"
-s4 pull
+pull $REMOTE $LATEST
 if [ "$?" -ne 0 ]; then
   echo "Failed to pull latest changes for volume: $VOLUME_NAME"
   exit 1
 fi
+
+# write current time into synced file
+if [ -z "$TZ" ]; then
+    export TZ='America/Chicago'
+fi
+
+# write .s4/synced file to indicate that volume is synced
+echo "$(date)" > "$CLONE_PATH/.s4/synced"

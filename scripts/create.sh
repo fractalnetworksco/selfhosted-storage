@@ -44,7 +44,7 @@ if [ -z "$LOOP_DEV" ]; then
 fi
 
 # create a symlink that points the loop device so we have a path for the volume to give docker
-ln -s $LOOP_DEV $LOOP_FILE_PATH
+ln_sudo -sf $LOOP_DEV $LOOP_FILE_PATH
 
 # append -loop to the stable symlink path for the actual loop file path
 LOOP_DEV_FILE=$LOOP_FILE_PATH-loop

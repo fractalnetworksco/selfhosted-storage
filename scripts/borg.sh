@@ -1,6 +1,5 @@
 #!/bin/bash
 function get_latest_archive() {
-    echo "Getting latest archive for $1"
     REPO=$1
     borg --bypass-lock list --short --last 1 $REPO
 }
@@ -26,11 +25,11 @@ function mount_archive() {
     REMOTE=$(get_remote $REMOTE_NAME)
     MOUNT_POINT=$2
     if [ -z "$3" ]; then
-        ARCHIVE=$(get_latest_archive $REMOTE)
+        ARCHIVE=$(get_latest_archive $REMOTE) || exit 1
     else
         ARCHIVE=$3
     fi
-    borg --bypass-lock mount --exclude .s4/.synced $REMOTE::$ARCHIVE $MOUNT_POINT
+    borg --bypass-lock mount $REMOTE::$ARCHIVE $MOUNT_POINT
     # exit if mount failed
     if [ "$?" -ne 0 ]; then
         echo "Failed to mount archive"

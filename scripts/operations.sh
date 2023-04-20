@@ -18,6 +18,10 @@ function is_initialized() {
         if [ "$?" -eq 0 ]; then
             echo "Remote $REMOTE_NAME initialized successfully"
             s4 config set remotes $REMOTE_NAME.initialized 1
+
+        else
+            echo "Failed to init remote $REMOTE_NAME"
+            exit 1
         fi
     else
         return 0
@@ -72,7 +76,7 @@ function push() {
         echo "Taking new snapshot"
         take_snapshot $VOLUME_PATH $SNAPSHOT_UUID
         cd $VOLUME_PATH/.s4/snapshots/snapshot-$SNAPSHOT_UUID
-        borg create --progress $REMOTE::$SNAPSHOT_UUID . --exclude $VOLUME_PATH/.s4/.synced
+        borg create --progress $REMOTE::$SNAPSHOT_UUID . --exclude ".s4/synced" --exclude ".s4/snapshots"
         # exit if replication failed
         if [ $? -ne 0 ]; then
             echo "Failed to replicate borg snapshot"
@@ -83,14 +87,16 @@ function push() {
         cleanup_snapshots $VOLUME_PATH/.s4/snapshots
         # sync again to account for snapshots and cleanup
         sync
-        # store the current generation in the volume config so we can detect changes going forward
+        # store the current generation in the global volume config so we can detect changes going forward
         s4 config set ~/.s4/volumes/$VOLUME_NAME state generation $(get_generation $VOLUME_PATH)
 
-        # write current time into .synced file
+        # write current time into synced file
         if [ -z "$TZ" ]; then
             export TZ='America/Chicago'
         fi
-        echo "$(date)" > "$VOLUME_PATH/.s4/.synced"
+
+        # store last push timestamp in global volume config
+        s4 config set ~/.s4/volumes/$VOLUME_NAME state last_push "$(date)"
 
     else
         echo "No changes since last push"
@@ -100,7 +106,6 @@ function push() {
 function pull () {
     source $SCRIPT_DIR/base.sh
     check_is_s4
-    set -x
     # if $REMOTE_NAME empty, use default remote
     if [ -z "$REMOTE_NAME" ]; then
         REMOTE_NAME=$(s4 config get default remote)
@@ -138,11 +143,11 @@ function pull () {
     #borg --bypass-lock extract --progress $REMOTE::$ARCHIVE
     umount $TMP_MOUNT
 
-    # write current time into .synced file
+    # write current time into synced file
     if [ -z "$TZ" ]; then
         export TZ='America/Chicago'
     fi
-    echo "$(date)" > $(pwd)/.s4/.synced
+    echo "$(date)" > $(pwd)/.s4/synced
 
     echo "Latest changes synced from remote \"$REMOTE_NAME\""
 }
@@ -153,7 +158,7 @@ function new_snapshot_exists() {
     REMOTE_NAME=$1
     REMOTE=$(get_remote $REMOTE_NAME)
     CURRENT_SNAPSHOT=$(s4 config get volume last_snapshot)
-    LATEST_SNAPSHOT=$(get_latest_archive $REMOTE)
+    LATEST_SNAPSHOT=$(get_latest_archive $REMOTE) || exit 1
     # if CURRENT_SNAPSHOT not equal LATEST_SNAPSHOT, return 0
     if [ "$CURRENT_SNAPSHOT" != "$LATEST_SNAPSHOT" ]; then
         echo $LATEST_SNAPSHOT

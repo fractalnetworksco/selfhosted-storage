@@ -1,0 +1,18 @@
+services:
+  s4-target:
+    image: s4-target:latest
+    env_file: ../ci_credentials.env
+  s4-test:
+    image: s4-test:latest
+    depends_on:
+      - s4-target
+    volumes:
+      - ../:/code
+    env_file: ../ci_credentials.env
+    privileged: true
+    command: "pytest -s"
+    #command: bash
+    tty: true
+    stdin_open: true
+    environment:
+      S4_REMOTE_PORT: 22 

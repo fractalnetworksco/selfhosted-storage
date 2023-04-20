@@ -15,8 +15,8 @@ VOLUME_PATH=${1:-$(pwd)}
 # ensure the given path is an s4 volume
 check_is_s4 $VOLUME_PATH
 
-# exit 0 if $VOLUME_PATH/.s4/.synced exists
-if [ -f "$VOLUME_PATH/.s4/.synced" ]; then
+# exit 0 if $VOLUME_PATH/.s4/synced exists
+if [ -f "$VOLUME_PATH/.s4/synced" ]; then
     echo "$VOLUME_PATH is synced"
     exit 0
 else

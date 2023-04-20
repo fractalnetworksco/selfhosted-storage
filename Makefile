@@ -43,6 +43,8 @@ borg:
 agent-export: docker
 	docker save -o s4-agent.tar s4-agent:latest
 
-test:
-	docker build -t s4-test:latest -f Dockerfile.test .
-	docker run --privileged --rm -it --name s4-tests -v `pwd`:/code s4-test:latest
+test: docker
+	ssh-keygen -t ed25519 -f id_ed25519-ci -q -N "" -y; \
+	echo -e "S4_PUB_KEY=\"$$(cat id_ed25519-ci.pub)\"\nS4_PRIV_KEY=\"$$(cat id_ed25519-ci)\"" > ci_credentials.env; \
+	docker build -t s4-test:latest -f Dockerfile.test .; \
+	cd tests/ && docker compose up --exit-code-from s4-test

@@ -2,20 +2,16 @@ FROM alpine
 
 # install openssh, borgbackup, btrfs-progs
 RUN apk add openssh-server borgbackup bash sudo btrfs-progs rsync
+# generate ssh host keys, add borg and s4admin users
 RUN ssh-keygen -A; adduser --disabled-password borg; adduser --disabled-password s4admin;
+# fix permissions
 RUN mkdir /home/borg/.ssh; chown borg:borg /home/borg/.ssh; chmod 700 /home/borg/.ssh;
 RUN mkdir /home/s4admin/.ssh; chown s4admin:s4admin /home/s4admin/.ssh; chmod 700 /home/s4admin/.ssh;
 
-COPY config/authorized_keys /home/borg/.ssh/authorized_keys
-COPY config/admin_authorized_keys /home/s4admin/.ssh/authorized_keys
+# allow s4admin to add ssh keys for borg user without password
 COPY config/s4admin /etc/sudoers.d/s4admin
-
 COPY scripts/add_ssh_key.sh /usr/bin/add_ssh_key
 COPY scripts/su_add_ssh_key.sh /usr/bin/su_add_ssh_key
-
-
-RUN chown borg:borg /home/borg/.ssh/authorized_keys; chmod 600 /home/borg/.ssh/authorized_keys;
-RUN chown s4admin:s4admin /home/s4admin/.ssh/authorized_keys; chmod 600 /home/s4admin/.ssh/authorized_keys;
 
 # Configure SSH server
 RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config \

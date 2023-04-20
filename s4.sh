@@ -14,5 +14,12 @@ fi
 SUBCOMMAND=$1
 shift
 
-# call the subcommand
-$SCRIPT_DIR/scripts/$SUBCOMMAND.sh "$@"
+# check if the subcommand exists
+if [ -f "$SCRIPT_DIR/scripts/$SUBCOMMAND.sh" ]; then
+    # call the subcommand
+    $SCRIPT_DIR/scripts/$SUBCOMMAND.sh "$@"
+else
+    # call defined functions passing args
+    source $SCRIPT_DIR/scripts/base.sh
+    ${SUBCOMMAND} "$@"
+fi

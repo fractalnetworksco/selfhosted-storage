@@ -1,6 +1,7 @@
 #!/bin/bash
 
 if [ ! -z "$DEBUG" ]; then
+    PS4='+${BASH_SOURCE}: Line ${LINENO}: ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
     set -x
 fi
 
@@ -86,6 +87,14 @@ function mknod_sudo(){
     fi
 }
 
+function ln_sudo(){
+    if [[ $(id -u) -ne 0 ]]; then
+        sudo ln $@
+    else
+        ln $@
+    fi
+}
+
 function set_owner_current_user() {
     chown_sudo $(id -u):$(id -g) $1
 }
@@ -120,9 +129,19 @@ function generate_uuid() {
 }
 
 function get_remote() {
+    # use the remote that was passed to the CLI if doing a clone
+    if [ ! -z "$REMOTE" ]; then
+        echo $REMOTE
+        return
+    fi
     local REMOTE_NAME=$1
     if [ -z "$REMOTE_NAME" ]; then
         REMOTE_NAME=$(s4 config get default remote)
     fi
     echo $(s4 config get remotes $REMOTE_NAME)
+}
+
+# we use this function and the version subcommand to sanity check our entrypoint in tests
+function get_version() {
+    s4 version
 }
