@@ -50,7 +50,5 @@ agent-export: docker
 #	cd tests/ && docker compose up --exit-code-from s4-test
 
 test: 
-	echo "Hello World" > testfile123
-	cat testfile123
-	ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa_noinput -q -N "" -y;
+	ssh-keygen -t ed25519 -f id_ed25519-ci -q -N ""; 
 
