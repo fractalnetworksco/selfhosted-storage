@@ -67,7 +67,7 @@ function push() {
         if [ -z "$TZ" ]; then
             export TZ='America/Chicago'
         fi
-        s4 config set volume last_replicated "$(date)"
+        s4 config set volume last_replicated "$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
         s4 config set volume size "$(du -sm $VOLUME_PATH | cut -f1)"
         s4 config set volume last_snapshot $SNAPSHOT_UUID
         # need to read volume config after writing to ensure the above writes are synced during this push operation
