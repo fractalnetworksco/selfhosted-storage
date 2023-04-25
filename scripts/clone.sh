@@ -7,7 +7,7 @@ source $SCRIPT_DIR/base.sh
 DOCKER=false
 
 # parse optional arguments using getopts with long options
-OPTS=`getopt -o n:l:d --long name:,label:,docker -- "$@"`
+OPTS=`getopt -o n:l:d:s: --long name:,label:,size:,docker -- "$@"`
 eval set -- "$OPTS"
 while true; do
   case "$1" in
@@ -21,6 +21,10 @@ while true; do
       ;;
     -l|--label)
       DOCKER_LABEL="$2"
+      shift 2
+      ;;
+    -s|--size)
+      SIZE="$2"
       shift 2
       ;;
     --)
@@ -47,15 +51,19 @@ elif [[ "$DOCKER" = false && -n "$DOCKER_LABEL" ]]; then
   exit 1
 fi
 
+# if clone path is set, use it was the volume name
 # if volume name is not set, default to basename of remote (last part of remote path)
-if [ -z "$VOLUME_NAME" ]; then
+if [ ! -z "$CLONE_PATH" ]; then
+    VOLUME_NAME=$(basename $(realpath $CLONE_PATH))
+    CLONE_PATH=$(realpath $CLONE_PATH)
+else
     VOLUME_NAME=$(basename $REMOTE)
+    # default clone path to PWD/volume_name if no path is given
+    CLONE_PATH="$(pwd)/$VOLUME_NAME"
 fi
 
-# default to PWD/volume_name if no path is given
-if [ -z "$CLONE_PATH" ]; then
-    CLONE_PATH="$(pwd)"
-fi
+# ensure clone path directory exists
+mkdir -p "$CLONE_PATH"
 
 # try to get the lastest archive from provided remote
 LATEST=$(get_latest_archive $REMOTE) || exit 1
@@ -64,12 +72,16 @@ if [ -z "$LATEST" ]; then
     exit 1
 fi
 
-# create a directory at clone_path/volume_name
-CLONE_PATH="$CLONE_PATH/$VOLUME_NAME"
-mkdir -p "$CLONE_PATH"
-
-# get volume's `size` from config file on the remote
-VOLUME_SIZE=$(borg --bypass-lock extract --stdout $REMOTE::$LATEST .s4/config | grep "^size=" | cut -d "=" -f 2)
+# if size is not provided, get size from the remote
+if [ -z "$SIZE" ]; then
+  VOLUME_SIZE=$(borg --bypass-lock extract --stdout $REMOTE::$LATEST .s4/config | grep "^size=" | cut -d "=" -f 2)
+  if [ -z "$VOLUME_SIZE" ]; then
+    echo "Failed to get size from remote $REMOTE::$LATEST"
+    exit 1
+  fi
+else
+  VOLUME_SIZE="$SIZE"
+fi
 
 # create loop device that is double the size of VOLUME_SIZE
 LOOP_DEV=$(get_next_loop_device)
@@ -97,14 +109,14 @@ if [ "$EUID" -ne 0 ]; then
   chown_sudo -R $EUID:$EUID "$CLONE_PATH"
 fi
 
+# enter after mount
+cd "$CLONE_PATH"
+
 # ensure .s4 directory exists inside volume
 mkdir -p "$CLONE_PATH/.s4"
 
-# move created .s4 directory into volume
-mv "$(pwd)/.s4" "$CLONE_PATH/.s4"
-
-# enter after mount
-cd "$CLONE_PATH"
+# write loop file
+s4 config set volume loop_file "$(get_file_for_loop_device $LOOP_DEV)"
 
 # extract s4 config file from remote in order for `s4 pull` to work
 borg --bypass-lock extract "$REMOTE::$LATEST" .s4/config
@@ -131,3 +143,10 @@ fi
 
 # write .s4/synced file to indicate that volume is synced
 echo "$(date)" > "$CLONE_PATH/.s4/synced"
+
+# return to the original directory in order to know if the user cloned to the current directory
+cd - &> /dev/null
+
+if [ $CLONE_PATH = "$(pwd)" ]; then
+  echo "Done. You will need to re-enter this directory \`cd $VOLUME_PATH\` to continue."
+fi

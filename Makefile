@@ -47,7 +47,6 @@ test:
 	rm -rf id_ed25519-ci*;
 	ssh-keygen -t ed25519 -f id_ed25519-ci -q -N "";
 	echo -e "S4_PUB_KEY=\"$$(cat id_ed25519-ci.pub)\"\nS4_PRIV_KEY=\"$$(cat id_ed25519-ci)\"" > ci_credentials.env;
-	docker build -t s4-test:latest -f Dockerfile.test .;
-	cd tests/ && docker compose up --exit-code-from s4-test
+	cd tests/ && docker compose up --build --exit-code-from s4-test
 
 

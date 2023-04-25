@@ -13,5 +13,8 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
+    - name: Build agent and target containers
+      run: make docker
+
     - name: Run tests
       run: make test

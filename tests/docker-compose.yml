@@ -4,6 +4,9 @@ services:
     env_file: ../ci_credentials.env
   s4-test:
     image: s4-test:latest
+    build:
+      context: ../
+      dockerfile: Dockerfile.test
     depends_on:
       - s4-target
     volumes:
@@ -15,4 +18,5 @@ services:
     tty: true
     stdin_open: true
     environment:
-      S4_REMOTE_PORT: 22 
+      S4_REMOTE_PORT: 22
+      S4_DEFAULT_MIN_SIZE: 120

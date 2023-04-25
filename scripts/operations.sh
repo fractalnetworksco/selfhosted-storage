@@ -98,6 +98,8 @@ function push() {
         # store last push timestamp in global volume config
         s4 config set ~/.s4/volumes/$VOLUME_NAME state last_push "$(date)"
 
+        # necessary for the agent docker health check to pass
+        echo "$(date)" > $(pwd)/.s4/synced
     else
         echo "No changes since last push"
     fi
@@ -179,4 +181,3 @@ function resize() {
     losetup_sudo --set-capacity $LOOP_DEV
     btrfs_sudo filesystem resize max $VOLUME_PATH
 }
-

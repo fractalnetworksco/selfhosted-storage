@@ -12,6 +12,11 @@ function get_loop_device_for_file() {
     losetup_sudo -a | grep $1 | awk -F: '{print $1}'
 }
 
+function get_file_for_loop_device() {
+    LOOP_DEV="$1"
+    # get file associated with loop device
+    losetup -l | grep "^$LOOP_DEV " | awk '{print $6}'
+}
 
 function get_next_loop_device() {
     next_device=$(losetup_sudo -f)
@@ -69,9 +74,18 @@ function create_loop_file() {
         echo "Not enough space to create file of size $SIZE"
         exit 1
     fi
-    # if $SIZE less than btrfs minimum, set to 120MB
-    if [ $SIZE -lt 120 ]; then
-        SIZE=120
+
+    # if not given a minimum size, use 1GB as default
+    if [ -z $S4_DEFAULT_MIN_SIZE ]; then
+        # if $SIZE less than 1GB, set to 1GB
+        if [ $SIZE -lt 1024 ]; then
+            SIZE=1024
+        fi
+    # if S4_DEFAULT_MIN_SIZE is set, use that as the minimum size
+    else
+        if [ $SIZE -lt $S4_DEFAULT_MIN_SIZE ]; then
+            SIZE=$S4_DEFAULT_MIN_SIZE
+        fi
     fi
 
     dd_sudo if=/dev/zero of="$LOOP_FILE" bs=1M count=$SIZE
