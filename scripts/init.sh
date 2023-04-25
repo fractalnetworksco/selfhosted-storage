@@ -13,29 +13,35 @@ source $SCRIPT_DIR/base.sh
 DOCKER=false
 
 # parse optional arguments using getopts with long options
-OPTS=`getopt -o s:d:l:n:y --long size:,name:,label:,docker,yes -- "$@"`
+OPTS=`getopt -o s:d:l:v:n:y: --long size:,name:,label:,volume-label:,docker,yes -- "$@"`
 eval set -- "$OPTS"
 while true; do
   case "$1" in
-    -s|--size)
-      SIZE="$2"
-      shift 2
-      ;;
     -d|--docker)
       DOCKER=true
       shift
       ;;
+    -y|--yes)
+      YES=true
+      shift
+      ;;
+    -s|--size)
+      SIZE="$2"
+      shift 2
+      ;;
+    -v|--volume-label)
+      VOLUME_LABEL="$2"
+      echo "volume label: $VOLUME_LABEL"
+      shift 2
+      ;;
     -l|--label)
-      DOCKER_LABEL="$2"
+      LABEL="$2"
+      echo "label: $LABEL"
       shift 2
       ;;
     -n|--name)
       VOLUME_NAME="$2"
       shift 2
-      ;;
-    -y|--yes)
-      YES=true
-      shift
       ;;
     --)
       shift
@@ -49,9 +55,20 @@ while true; do
 done
 
 # exit if a label was specified but docker not specified
-if [[ "$DOCKER" = false && -n "$DOCKER_LABEL" ]]; then
+if [[ "$DOCKER" = false && -n "$VOLUME_LABEL" ]]; then
   echo "Error: --docker must be set if --label specified"
   exit 1
+fi
+
+# if label is set, make sure it is in the form <key>=<value>
+if [ ! -z $LABEL ]; then
+  LABEL_KEY=$(echo $LABEL | awk -F "=" '{print $1}')
+  LABEL_VALUE=$(echo $LABEL | awk -F "=" '{print $2}')
+
+  if [ -z $LABEL_KEY ] || [ -z $LABEL_VALUE ]; then
+    echo "Error: --label must be in the form <key>=<value>"
+    exit 1
+  fi
 fi
 
 # if volume path is not set, default to current directory
@@ -128,7 +145,7 @@ fi
 
 # create docker volume if --docker flag is set
 if [ "$DOCKER" = true ]; then
-    s4 docker create $LOOP_DEV "$VOLUME_NAME" "$DOCKER_LABEL"
+    s4 docker create $LOOP_DEV "$VOLUME_NAME" "$VOLUME_LABEL"
 fi
 
 if [ -z "$YES" ]; then
@@ -139,4 +156,10 @@ fi
 
 cd $MOUNT_POINT
 s4 config set volume name $VOLUME_NAME
+s4 config set volume id $(generate_uuid)
 s4 config set ~/.s4/volumes/$VOLUME_NAME state generation -1
+
+# TODO: Add support for multiple labels
+if [ ! -z $LABEL ]; then
+  s4 config set labels $LABEL_KEY $LABEL_VALUE
+fi

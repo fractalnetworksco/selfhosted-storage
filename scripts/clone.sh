@@ -7,7 +7,7 @@ source $SCRIPT_DIR/base.sh
 DOCKER=false
 
 # parse optional arguments using getopts with long options
-OPTS=`getopt -o n:l:d:s: --long name:,label:,size:,docker -- "$@"`
+OPTS=`getopt -o n:v:d:s: --long name:,volume-label:,size:,docker -- "$@"`
 eval set -- "$OPTS"
 while true; do
   case "$1" in
@@ -19,8 +19,8 @@ while true; do
       DOCKER=true
       shift
       ;;
-    -l|--label)
-      DOCKER_LABEL="$2"
+    -v|--volume-label)
+      VOLUME_LABEL="$2"
       shift 2
       ;;
     -s|--size)
@@ -46,7 +46,7 @@ if [ -z "$REMOTE" ]; then
     echo "Usage: s4 clone <remote> [--name <volume_name>] [--docker]"
     exit 1
 # exit if a label was specified but docker not specified
-elif [[ "$DOCKER" = false && -n "$DOCKER_LABEL" ]]; then
+elif [[ "$DOCKER" = false && -n "$VOLUME_LABEL" ]]; then
   echo "Error: --docker must be set if --label specified"
   exit 1
 fi
@@ -93,7 +93,7 @@ fi
 
 # create docker volume if --docker flag is set
 if [ "$DOCKER" = true ]; then
-  s4 docker create "$LOOP_DEV" "$VOLUME_NAME" "$DOCKER_LABEL"
+  s4 docker create "$LOOP_DEV" "$VOLUME_NAME" "$VOLUME_LABEL"
 fi
 
 # mount loop device at clone path
