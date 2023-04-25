@@ -43,7 +43,7 @@ borg:
 agent-export: docker
 	docker save -o s4-agent.tar s4-agent:latest
 
-test: docker
+test:
 	rm -rf id_ed25519-ci*;
 	ssh-keygen -t ed25519 -f id_ed25519-ci -q -N "";
 	echo -e "S4_PUB_KEY=\"$$(cat id_ed25519-ci.pub)\"\nS4_PRIV_KEY=\"$$(cat id_ed25519-ci)\"" > ci_credentials.env;

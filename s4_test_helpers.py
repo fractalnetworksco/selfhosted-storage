@@ -23,6 +23,7 @@ def cleanup_pwd(volume_name):
         sh.rm('-rf', f'/tmp/{volume_name}')
         sh.rm('-rf', f'/var/lib/fractal/{volume_name}')
         sh.rm('-rf', f'/var/lib/fractal/{volume_name}-loop')
+        sh.losetup('-D')
     return cleanup
 def volume_size_mb(volume_path: str):
     '''

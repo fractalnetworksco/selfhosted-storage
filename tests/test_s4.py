@@ -33,7 +33,9 @@ def test_volume_init_pwd_push(s4_configure_test):
     # reenter so that the new mount will resolve, UGH!
     reenter()
     sh.s4('remote', 'add', 'origin', f'borg@s4-target:/home/borg/{volume_name}')
-    out = sh.s4('push')
+    sh.s4('push')
+    out = sh.s4('log')
+    assert len(out.split(' ')[0]) == 36
 
 def test_volume_init_with_size(s4_configure_test):
     assert '/tmp/s4-test' not in sh.df()
