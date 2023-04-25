@@ -28,6 +28,69 @@ function is_initialized() {
     fi
 }
 
+function push_archive_metadata() {
+    # source $SCRIPT_DIR/base.sh
+
+    # exit if S4_API_URL is not set
+    if [ -z "$S4_API_URL" ]; then
+        echo "Error: \$S4_API_URL environment variable is not set"
+        exit 1
+    fi
+    # exit if S4_API_TOKEN is not set
+    if [ -z "$S4_API_TOKEN" ]; then
+        echo "Error: \$S4_API_TOKEN environment variable is not set"
+        exit 1
+    fi
+
+    REMOTE="$1"
+
+    # if $1 not set use default remote
+    if [ -z "$REMOTE" ]; then
+        REMOTE="$(get_remote)"
+    fi
+
+    # get latest archive
+    ARCHIVE="$(borg list "$REMOTE" --json --last 1)"
+    echo "archive: $ARCHIVE"
+
+    if [ -z "$ARCHIVE" ]; then
+        echo "No archives found for remote $REMOTE"
+        return 1
+    fi
+
+    VOLUME_ID="$(s4 config get volume id)"
+    VOLUME_NAME="$(s4 config get volume name)"
+    VOLUME_SIZE="$(s4 config get volume size)"
+
+    # TODO: Send writer id
+
+    # FIXME: hardcoding an expected label for now.
+    # In the future, `s4 config get` should allow getting entire sections as an array or something
+    LABEL="$(s4 config get labels app_instance)"
+
+    # dont exit if curl fails, just return 1
+    curl -H "Authorization: Token $S4_API_TOKEN" \
+         -H "Content-Type: application/json" \
+         -X POST \
+         -d "{ \
+                \"volume_id\": \"$VOLUME_ID\", \
+                \"name\":\"$VOLUME_NAME\", \
+                \"size\": \"$VOLUME_SIZE\", \
+                \"metadata\": $ARCHIVE, \
+                \"app_instance\": \"$LABEL\", \
+                \"remote\": \"$REMOTE\" \
+            }" \
+         "$S4_API_URL"
+
+    if [ "$?" -ne 0 ]; then
+        echo "Failed to push archive metadata to $S4_API_URL"
+        return 1
+    else
+        return 0
+    fi
+
+}
+
 function push() {
     source $SCRIPT_DIR/base.sh
     local REMOTE_NAME=$1
@@ -35,16 +98,16 @@ function push() {
     # if $1 not set use default remote
     if [ -z "$REMOTE_NAME" ]; then
         REMOTE_NAME=$(s4 config get default remote)
-        REMOTE=$(s4 config get remotes $REMOTE_NAME)
+        REMOTE="$(s4 config get remotes $REMOTE_NAME)"
     else
-        REMOTE=$(s4 config get remotes $REMOTE_NAME)
+        REMOTE="$(s4 config get remotes $REMOTE_NAME)"
     fi
     # if $REMOTE is empty exit
     if [ "$?" -ne 0 ]; then
         echo "No remote configured for volume $(s4 config get volume name)"
         exit 1
     fi
-    is_initialized $REMOTE_NAME
+    is_initialized "$REMOTE_NAME"
     local VOLUME_PATH=$(pwd)
     local VOLUME_NAME=$(s4 config get volume name)
     local SNAPSHOT_UUID=$(generate_uuid)
@@ -84,11 +147,11 @@ function push() {
         fi
         cd $VOLUME_PATH
         # cleanup snapshots
-        cleanup_snapshots $VOLUME_PATH/.s4/snapshots
+        cleanup_snapshots "$VOLUME_PATH/.s4/snapshots"
         # sync again to account for snapshots and cleanup
         sync
         # store the current generation in the global volume config so we can detect changes going forward
-        s4 config set ~/.s4/volumes/$VOLUME_NAME state generation $(get_generation $VOLUME_PATH)
+        s4 config set ~/.s4/volumes/$VOLUME_NAME state generation "$(get_generation $VOLUME_PATH)"
 
         # write current time into synced file
         if [ -z "$TZ" ]; then
@@ -96,10 +159,17 @@ function push() {
         fi
 
         # store last push timestamp in global volume config
-        s4 config set ~/.s4/volumes/$VOLUME_NAME state last_push "$(date)"
+        s4 config set ~/.s4/volumes/"$VOLUME_NAME" state last_push "$(date)"
 
         # necessary for the agent docker health check to pass
-        echo "$(date)" > $(pwd)/.s4/synced
+        date > "$(pwd)/.s4/synced"
+
+        # if S4_API_URL is set, push archive metadata to S4 API
+        if [ -n "$S4_API_URL" ]; then
+            echo "Pushing archive metadata to S4 API"
+            push_archive_metadata "$REMOTE"
+        fi
+
     else
         echo "No changes since last push"
     fi

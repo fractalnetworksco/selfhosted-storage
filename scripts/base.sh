@@ -138,7 +138,7 @@ function get_remote() {
     if [ -z "$REMOTE_NAME" ]; then
         REMOTE_NAME=$(s4 config get default remote)
     fi
-    echo $(s4 config get remotes $REMOTE_NAME)
+    s4 config get remotes "$REMOTE_NAME"
 }
 
 # we use this function and the version subcommand to sanity check our entrypoint in tests
