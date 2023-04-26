@@ -8,6 +8,9 @@ faker = Faker()
 
 @pytest.fixture(scope='function')
 def s4_configure_test(request):
+    '''
+    convenience function for configuring the setup and teardown of an s4 volume pytest
+    '''
     def configure(setup, teardown, volume_name = None):
         if not volume_name:
             volume_name = '-'.join(faker.words(2))
@@ -21,9 +24,10 @@ def s4_configure_test(request):
         # don't register teardown if test is marked with no_teardown
         if request.node.get_closest_marker('no_teardown'):
             return
-        # cleanup after test
-        request.addfinalizer(teardown(volume_name))
-        return reenter, volume_name
+        # setup cleanup step after test
+        cleanup = teardown(volume_name)
+        request.addfinalizer(cleanup)
+        return reenter, volume_name, cleanup
     return configure
 
 
