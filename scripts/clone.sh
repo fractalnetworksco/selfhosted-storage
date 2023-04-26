@@ -5,9 +5,10 @@ source $SCRIPT_DIR/base.sh
 
 # define default values for optional arguments
 DOCKER=false
+ORIGIN_NAME="origin"
 
 # parse optional arguments using getopts with long options
-OPTS=`getopt -o n:v:d:s: --long name:,volume-label:,size:,docker -- "$@"`
+OPTS=`getopt -o n:v:d:s:o: --long name:,volume-label:,size:,docker,origin: -- "$@"`
 eval set -- "$OPTS"
 while true; do
   case "$1" in
@@ -25,6 +26,10 @@ while true; do
       ;;
     -s|--size)
       SIZE="$2"
+      shift 2
+      ;;
+    -o|--origin)
+      ORIGIN_NAME="$2"
       shift 2
       ;;
     --)
@@ -125,13 +130,11 @@ if [ "$?" -ne 0 ]; then
   exit 1
 fi
 
-# unset latest snapshot so that `s4 pull` will pull in latest snapshot
-s4 config set volume last_snapshot ""
 
 # pull in latest snapshot from remote
 echo "Pulling latest snapshot from $REMOTE"
-pull $REMOTE $LATEST
-if [ "$?" -ne 0 ]; then
+
+if ! pull "$REMOTE" "$LATEST"; then
   echo "Failed to pull latest changes for volume: $VOLUME_NAME"
   exit 1
 fi
@@ -142,7 +145,13 @@ if [ -z "$TZ" ]; then
 fi
 
 # write .s4/synced file to indicate that volume is synced
-echo "$(date)" > "$CLONE_PATH/.s4/synced"
+date > "$CLONE_PATH/.s4/synced"
+# unset latest snapshot so that `s4 pull` will pull in latest snapshot
+s4 config set volume last_snapshot ""
+
+# update the volume's remote to the provided remote
+s4 config set remotes "$ORIGIN_NAME" "$REMOTE"
+s4 config set default remote "$ORIGIN_NAME"
 
 # return to the original directory in order to know if the user cloned to the current directory
 cd - &> /dev/null
