@@ -130,15 +130,23 @@ function generate_uuid() {
 
 function get_remote() {
     # use the remote that was passed to the CLI if doing a clone
-    if [ ! -z "$REMOTE" ]; then
-        echo $REMOTE
-        return
-    fi
+    # if [ ! -z "$REMOTE" ]; then
+    #     echo $REMOTE
+    #     return
+    # fi
     local REMOTE_NAME=$1
     if [ -z "$REMOTE_NAME" ]; then
-        REMOTE_NAME=$(s4 config get default remote)
+        if ! REMOTE_NAME=$(s4 config get default remote); then
+            echo "Error: No default remote set"
+            exit 1
+        fi
     fi
-    s4 config get remotes "$REMOTE_NAME"
+    # exit if non-zero exit code
+    if ! REMOTE=$(s4 config get remotes "$REMOTE_NAME"); then
+        echo "Error: no remote for $REMOTE_NAME"
+        exit 1
+    fi
+    echo "$REMOTE"
 }
 
 # we use this function and the version subcommand to sanity check our entrypoint in tests

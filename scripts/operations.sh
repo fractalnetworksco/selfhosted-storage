@@ -205,7 +205,10 @@ function pull () {
     #     echo "new_snapshot_exists returned invalid uuid: $ARCHIVE"
     #     return 1
     # fi
-    REMOTE=$(get_remote $REMOTE_NAME)
+    if ! REMOTE=$(get_remote $REMOTE_NAME); then
+        echo "get_remote failed to return remote for $REMOTE_NAME"
+        exit 1
+    fi
     TMP_MOUNT="/tmp/s4/$ARCHIVE/"
     mkdir -p $TMP_MOUNT
     echo "New changes found, syncing from remote \"$REMOTE_NAME\""

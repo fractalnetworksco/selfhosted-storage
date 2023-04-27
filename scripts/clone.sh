@@ -8,7 +8,7 @@ DOCKER=false
 ORIGIN_NAME="origin"
 
 # parse optional arguments using getopts with long options
-OPTS=`getopt -o n:v:d:s:o: --long name:,volume-label:,size:,docker,origin: -- "$@"`
+OPTS=$(getopt -o n:v:d:s:o: --long name:,volume-label:,size:,docker,origin: -- "$@")
 eval set -- "$OPTS"
 while true; do
   case "$1" in
@@ -134,7 +134,11 @@ fi
 # pull in latest snapshot from remote
 echo "Pulling latest snapshot from $REMOTE"
 
-if ! pull "$REMOTE" "$LATEST"; then
+# set volume's remote to the provided remote
+s4 config set remotes "$ORIGIN_NAME" "$REMOTE"
+s4 config set default remote "$ORIGIN_NAME"
+
+if ! pull "$ORIGIN_NAME" "$LATEST"; then
   echo "Failed to pull latest changes for volume: $VOLUME_NAME"
   exit 1
 fi
@@ -149,7 +153,7 @@ date > "$CLONE_PATH/.s4/synced"
 # unset latest snapshot so that `s4 pull` will pull in latest snapshot
 s4 config set volume last_snapshot ""
 
-# update the volume's remote to the provided remote
+# reset the volume's remote to the provided remote again since it was overwwritten by `pull`
 s4 config set remotes "$ORIGIN_NAME" "$REMOTE"
 s4 config set default remote "$ORIGIN_NAME"
 

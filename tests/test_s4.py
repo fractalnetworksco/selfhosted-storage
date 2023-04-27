@@ -1,4 +1,5 @@
-from os import chdir
+import os
+
 import pytest
 import sh
 
@@ -115,10 +116,11 @@ def test_s4_clone(s4_configure_test):
     # cleanup so we can clone (avoid conflicting loop dev filename)
     remove_volume()
     remote_ipv4 = get_ip_for_hostname('s4-target')
+    os.environ['DEBUG'] = '1'
     sh.s4('clone', f'borg@{remote_ipv4}:/home/borg/{volume_name}')
     assert volume_name in sh.df()
     assert volume_size_mb(f'/tmp/{volume_name}') == 120
-    chdir(volume_name)
+    os.chdir(volume_name)
     # make sure we update the remote to the remote we cloned from in the volume config
     assert sh.s4('config', 'get', 'remotes', 'origin').strip() == f'borg@{remote_ipv4}:/home/borg/{volume_name}'
     assert sh.s4('config', 'get', 'default', 'remote').strip() == f'origin'

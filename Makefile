@@ -1,4 +1,7 @@
+.PHONY: test docker
+
 SHELL = '/bin/bash'
+
 docker:
 	docker pull alpine:latest
 	# build the docker image

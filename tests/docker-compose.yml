@@ -13,7 +13,7 @@ services:
       - ../:/code
     env_file: ../ci_credentials.env
     privileged: true
-    command: "pytest -s"
+    command: "pytest -s -k ${PYTEST_FILTER:-test_}"
     #command: bash
     tty: true
     stdin_open: true
