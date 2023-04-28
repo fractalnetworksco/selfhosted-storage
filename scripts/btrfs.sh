@@ -73,3 +73,17 @@ function check_btrfs(){
         export BTRFS=false
     fi
 }
+
+function btrfs_df() {
+    local subvolume_path="$1"
+    local data_line
+    local total_size_bytes
+    # Get the Data line from the btrfs filesystem df output
+    data_line=$(btrfs filesystem df -b "$subvolume_path" | grep -E "Data, (single|RAID)")
+
+    # Extract the total size using grep
+    total_size_bytes=$(echo "$data_line" | grep -oP 'total=\K[0-9.]+')
+
+    # Convert the total size to megabytes and round up using arithmetic expansion
+    echo "$(( (total_size_bytes + 1048575) / 1048576 ))"
+}

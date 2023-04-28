@@ -17,3 +17,7 @@ POST /api/v1/s4/volume
 - once agent has synced from temp remote it will POST to endpoint that will teardown reposnap and log that the device has successfully synced
     DELETE /api/v1/s4/volumes/<vol-id>/reposnap/<snap-id>
 - periodic task that looks for reposnaps older than 1 minute that no longer have an active borg lock and removes them
+
+
+# System services
+- implement s4 as a mosaic system service

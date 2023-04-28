@@ -131,8 +131,8 @@ function push() {
             export TZ='America/Chicago'
         fi
         s4 config set volume last_replicated "$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
-        s4 config set volume size "$(du -sm $VOLUME_PATH | cut -f1)"
-        s4 config set volume last_snapshot $SNAPSHOT_UUID
+        s4 config set volume size "$(btrfs_df "$VOLUME_PATH")"
+        s4 config set volume last_snapshot "$SNAPSHOT_UUID"
         # need to read volume config after writing to ensure the above writes are synced during this push operation
         # without this, pending writes are not flushed which causes continuous empty replication
         cat $VOLUME_PATH/.s4/config > /dev/null
