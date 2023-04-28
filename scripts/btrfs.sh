@@ -87,3 +87,9 @@ function btrfs_df() {
     # Convert the total size to megabytes and round up using arithmetic expansion
     echo "$(( (total_size_bytes + 1048575) / 1048576 ))"
 }
+
+function btrfs_free() {
+    local VOLUME_PATH
+    VOLUME_PATH="$1"
+    btrfs_sudo fi us "$VOLUME_PATH" |grep Data,single |awk '{print $4}' | sed 's/[()]//g'
+}
