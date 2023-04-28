@@ -80,7 +80,7 @@ function push_archive_metadata() {
                 \"app_instance\": \"$LABEL\", \
                 \"remote\": \"$REMOTE\" \
             }" \
-         "$S4_API_URL"
+         "$S4_API_URL/$VOLUME_ID/metadata/"
 
     if [ "$?" -ne 0 ]; then
         echo "Failed to push archive metadata to $S4_API_URL"
@@ -139,7 +139,7 @@ function push() {
         echo "Taking new snapshot"
         take_snapshot $VOLUME_PATH $SNAPSHOT_UUID
         cd $VOLUME_PATH/.s4/snapshots/snapshot-$SNAPSHOT_UUID
-        borg create --progress $REMOTE::$SNAPSHOT_UUID . --exclude ".s4/synced" --exclude ".s4/snapshots"
+        borg create --progress $REMOTE::$SNAPSHOT_UUID . --exclude ".s4/synced" --exclude ".s4/snapshots/*"
         # exit if replication failed
         if [ $? -ne 0 ]; then
             echo "Failed to replicate borg snapshot"
